@@ -4,13 +4,15 @@ import java.util.Set;
 
 public class Teacher {
     private final boolean[][] available;
+    private final boolean[] defaultAvailable;
     private final int id;
     private final Subject subject;
     private final Set<Room> requiredRoomSet;
 
-    public Teacher(int id, boolean[][] available, Subject subject, Set<Room> roomSet) {
+    public Teacher(int id, boolean[] defaultAvailable, boolean[][] available, Subject subject, Set<Room> roomSet) {
         this.id = id;
         this.available = available;
+        this.defaultAvailable = defaultAvailable;
         this.subject = subject;
         this.requiredRoomSet = roomSet;
     }
@@ -33,5 +35,9 @@ public class Teacher {
 
     public Set<Room> getRequiredRoomSet() {
         return requiredRoomSet;
+    }
+
+    public boolean[] getDefaultAvailable() {
+        return defaultAvailable;
     }
 }

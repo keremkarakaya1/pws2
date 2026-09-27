@@ -10,4 +10,12 @@ public class Student {
         this.profile = profile;
         this.electiveSubjects = electiveSubjects;
     }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public Set<Subject> getElectiveSubjects() {
+        return electiveSubjects;
+    }
 }
