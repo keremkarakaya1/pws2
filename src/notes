@@ -1,0 +1,11 @@
+students get profiles
+profiles have subjects
+subjects have groups
+each subject has teachers
+
+a lesson is a teacher student group combination
+
+teachers have availability
+
+state
+diff and parent
