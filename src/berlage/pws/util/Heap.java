@@ -43,7 +43,7 @@ public class Heap {
         } else {
             int index = indexMap.get(state);
 
-            if (heap[index].cost() > state.cost()) {
+            if (heap[index].getTotalCost() > state.getTotalCost()) {
                 indexMap.put(state, index);
                 heap[index] = state;
 
@@ -71,9 +71,8 @@ public class Heap {
     }
 
     private boolean isHigherPriority(ScheduleState first, ScheduleState second) {
-        //TODO consider spread weight
-        int costFirst = first.cost();// + first.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
-        int costSecond = second.cost();// + second.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
+        int costFirst = first.getTotalCost();// + first.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
+        int costSecond = second.getTotalCost();// + second.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
 
         return costFirst < costSecond;
     }

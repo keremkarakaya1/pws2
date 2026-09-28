@@ -22,6 +22,10 @@ public class Student {
         return electiveSubjects;
     }
 
+    public int getId() {
+        return id;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
