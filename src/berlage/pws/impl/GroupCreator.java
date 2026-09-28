@@ -63,6 +63,8 @@ public class GroupCreator {
             groupsPerSubject.put(subject, chunks);
         }
 
+        int id = 0;
+
         for (Map.Entry<Subject, Set<Set<Student>>> entry : groupsPerSubject.entrySet()) {
             Subject subject = entry.getKey();
             Set<Set<Student>> groups = entry.getValue();
@@ -73,7 +75,7 @@ public class GroupCreator {
 
             for (Set<Student> group : groups) {
                 Teacher teacher = teachers.get(counter % teachers.size());
-                subjectGroups.add(new SubjectGroup(teacher, subject, group));
+                subjectGroups.add(new SubjectGroup(teacher, subject, group, id++));
                 counter++;
             }
 

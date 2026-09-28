@@ -1,5 +1,6 @@
 package berlage.pws.model;
 
+import java.util.Objects;
 import java.util.Set;
 
 public class Teacher {
@@ -39,5 +40,22 @@ public class Teacher {
 
     public boolean[] getDefaultAvailable() {
         return defaultAvailable;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Teacher teacher = (Teacher) o;
+        return id == teacher.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(id);
     }
 }
