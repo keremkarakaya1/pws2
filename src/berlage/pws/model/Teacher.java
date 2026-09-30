@@ -9,13 +9,15 @@ public class Teacher {
     private final int id;
     private final Set<Subject> subjects;
     private final Set<Room> requiredRoomSet;
+    private final RoomType typeRequirement;
 
-    public Teacher(int id, boolean[] defaultAvailable, boolean[][] available, Set<Subject> subjects, Set<Room> roomSet) {
+    public Teacher(int id, boolean[] defaultAvailable, boolean[][] available, Set<Subject> subjects, Set<Room> roomSet, RoomType typeRequirement) {
         this.id = id;
         this.available = available;
         this.defaultAvailable = defaultAvailable;
         this.subjects = subjects;
         this.requiredRoomSet = roomSet;
+        this.typeRequirement = typeRequirement;
     }
 
     public int getId() {
@@ -57,5 +59,9 @@ public class Teacher {
     @Override
     public String toString() {
         return String.valueOf(id);
+    }
+
+    public RoomType getTypeRequirement() {
+        return typeRequirement;
     }
 }

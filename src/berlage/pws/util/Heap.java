@@ -11,7 +11,7 @@ public class Heap {
 
     private int fullSize = 10;
     private ScheduleState[] heap = new ScheduleState[fullSize];
-    HashMap<ScheduleState, Integer> indexMap = new HashMap<>();
+    private final HashMap<ScheduleState, Integer> indexMap = new HashMap<>();
     private int currentSize = 0;
 
 
@@ -71,6 +71,13 @@ public class Heap {
     }
 
     private boolean isHigherPriority(ScheduleState first, ScheduleState second) {
+        int indexFirst = first.getIndex();
+        int indexSecond = second.getIndex();
+
+        if (indexFirst != indexSecond) {
+            return indexFirst > indexSecond;
+        }
+
         int costFirst = first.getTotalCost();// + first.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
         int costSecond = second.getTotalCost();// + second.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
 
@@ -78,6 +85,10 @@ public class Heap {
     }
 
     public void offer(ScheduleState state) {
+        if (contains(state)) {
+            return;
+        }
+
         if (currentSize >= 3 * fullSize / 4) {
             resize();
         }

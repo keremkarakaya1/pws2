@@ -20,7 +20,7 @@ public class SubjectGroup {
         return teacher;
     }
 
-    public Subject getSubject() {
+    public Subject getSubjects() {
         return subject;
     }
 

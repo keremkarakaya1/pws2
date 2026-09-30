@@ -36,7 +36,7 @@ public final class LessonInstanceBuilder {
         flat.sort(comparator);
 
         for (SubjectGroup group : flat) {
-            Subject subject = group.getSubject();
+            Subject subject = group.getSubjects();
 
             if (!requiredPerWeek.containsKey(subject)) {
                 throw new IllegalStateException(subject + " missing -- InstanceBuilder");

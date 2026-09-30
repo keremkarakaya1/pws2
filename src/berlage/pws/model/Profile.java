@@ -18,6 +18,14 @@ public class Profile {
         return mandatorySubjects;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public int getSecondaryId() {
+        return secondaryId;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
@@ -28,13 +36,5 @@ public class Profile {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public int getSecondaryId() {
-        return secondaryId;
     }
 }

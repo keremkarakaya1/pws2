@@ -8,7 +8,6 @@ public enum Subject {
     WISKUNDE_A,
     WISKUNDE_B,
     WISKUNDE_C,
-    WISKUNDE_D,
     NATUURKUNDE,
     SCHEIKUNDE,
     BIOLOGIE,

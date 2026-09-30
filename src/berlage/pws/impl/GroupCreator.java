@@ -13,13 +13,14 @@ public class GroupCreator {
                 List<Subject> sorted = new ArrayList<>(s.getElectiveSubjects());
                 sorted.sort(Comparator.naturalOrder());
                 return sorted.toString();
-            });
+            })
+            .thenComparingInt(Student::getId);
 
     public Map<Subject, Set<SubjectGroup>> createGroups(Set<Student> students, Map<Subject, Set<Teacher>> teacherPool , int classCapacity) {
-        Map<Subject, Set<SubjectGroup>> result = new HashMap<>();
-        Map<Subject, Set<Student>> demandMap = new HashMap<>();
-        Map<Subject, Integer> countPerSubject = new HashMap<>();
-        Map<Subject, Set<Set<Student>>> groupsPerSubject = new HashMap<>();
+        Map<Subject, Set<SubjectGroup>> result = new EnumMap<>(Subject.class);
+        Map<Subject, Set<Student>> demandMap = new EnumMap<>(Subject.class);
+        Map<Subject, Integer> countPerSubject = new EnumMap<>(Subject.class);
+        Map<Subject, List<Set<Student>>> groupsPerSubject = new EnumMap<>(Subject.class);
 
         for (Student student : students) {
             Profile profile = student.getProfile();
@@ -50,7 +51,7 @@ public class GroupCreator {
             int baseSize = studentList.size() / numGroups;
             int remainder = studentList.size() % numGroups;
 
-            Set<Set<Student>> chunks = new HashSet<>();
+            List<Set<Student>> chunks = new ArrayList<>();
             int index = 0;
 
             for (int i = 0; i < numGroups; i++) {
@@ -65,10 +66,11 @@ public class GroupCreator {
 
         int id = 0;
 
-        for (Map.Entry<Subject, Set<Set<Student>>> entry : groupsPerSubject.entrySet()) {
+        for (Map.Entry<Subject, List<Set<Student>>> entry : groupsPerSubject.entrySet()) {
             Subject subject = entry.getKey();
-            Set<Set<Student>> groups = entry.getValue();
+            List<Set<Student>> groups = entry.getValue();
             List<Teacher> teachers = new ArrayList<>(teacherPool.get(subject));
+            teachers.sort(Comparator.comparingInt(Teacher::getId));
 
             Set<SubjectGroup> subjectGroups = new HashSet<>();
             int counter = 0;
