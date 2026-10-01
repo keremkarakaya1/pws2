@@ -1,9 +1,6 @@
 package berlage.pws.impl;
 
-import berlage.pws.model.Student;
-import berlage.pws.model.Subject;
-import berlage.pws.model.SubjectGroup;
-import berlage.pws.model.Teacher;
+import berlage.pws.model.*;
 
 import java.util.*;
 
@@ -11,7 +8,7 @@ public final class LessonInstanceBuilder {
 
     private LessonInstanceBuilder() {}
 
-    public static List<SubjectGroup> build(Map<Subject, Set<SubjectGroup>> groups, Map<Subject, Integer> requiredPerWeek) {
+    public static List<SubjectGroup> build(Map<RoomType, Integer> roomCountPerType, Map<Subject, Set<SubjectGroup>> groups, Map<Subject, Integer> requiredPerWeek) {
         List<SubjectGroup> flat = new ArrayList<>();
         List<SubjectGroup> lessonInstances = new ArrayList<>();
 
@@ -27,7 +24,7 @@ public final class LessonInstanceBuilder {
 
         Comparator<SubjectGroup> comparator = Comparator
                 .comparingInt((SubjectGroup group) -> teacherAvailability.get(group.getTeacher()))
-                .thenComparingInt(group -> group.getTeacher().getRequiredRoomSet().size())
+                .thenComparingInt(group -> roomCountPerType.get(group.getTeacher().getTypeRequirement()))
                 .thenComparingInt(group -> -overlapMap.get(group))
                 .thenComparingDouble(group -> -(double) groupCountPerTeacher.get(group.getTeacher()) / teacherAvailability.get(group.getTeacher()))
                 .thenComparingInt(SubjectGroup::getId);
@@ -36,7 +33,7 @@ public final class LessonInstanceBuilder {
         flat.sort(comparator);
 
         for (SubjectGroup group : flat) {
-            Subject subject = group.getSubjects();
+            Subject subject = group.getSubject();
 
             if (!requiredPerWeek.containsKey(subject)) {
                 throw new IllegalStateException(subject + " missing -- InstanceBuilder");

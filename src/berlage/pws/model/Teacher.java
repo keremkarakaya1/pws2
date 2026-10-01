@@ -8,15 +8,15 @@ public class Teacher {
     private final boolean[] defaultAvailable;
     private final int id;
     private final Set<Subject> subjects;
-    private final Set<Room> requiredRoomSet;
+    //private final Set<Room> requiredRoomSet;
     private final RoomType typeRequirement;
 
-    public Teacher(int id, boolean[] defaultAvailable, boolean[][] available, Set<Subject> subjects, Set<Room> roomSet, RoomType typeRequirement) {
+    public Teacher(int id, boolean[] defaultAvailable, boolean[][] available, Set<Subject> subjects, RoomType typeRequirement) {
         this.id = id;
         this.available = available;
         this.defaultAvailable = defaultAvailable;
         this.subjects = subjects;
-        this.requiredRoomSet = roomSet;
+        //this.requiredRoomSet = roomSet;
         this.typeRequirement = typeRequirement;
     }
 
@@ -32,16 +32,22 @@ public class Teacher {
         available[day][slot] = state;
     }
 
-    public Set<Subject> getSubject() {
+    public Set<Subject> getSubjects() {
         return subjects;
     }
 
+    /*
     public Set<Room> getRequiredRoomSet() {
         return requiredRoomSet;
     }
+     */
 
     public boolean[] getDefaultAvailable() {
         return defaultAvailable;
+    }
+
+    public RoomType getTypeRequirement() {
+        return typeRequirement;
     }
 
     @Override
@@ -61,7 +67,5 @@ public class Teacher {
         return String.valueOf(id);
     }
 
-    public RoomType getTypeRequirement() {
-        return typeRequirement;
-    }
+
 }

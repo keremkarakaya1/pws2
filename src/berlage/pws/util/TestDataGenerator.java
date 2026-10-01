@@ -10,7 +10,7 @@ public class TestDataGenerator {
     private final GroupCreator groupCreator;
     private final Set<Subject> electiveSubjects;
     private final Set<Profile> profiles;
-    private final Map<RoomType, Integer> indexPerType;
+    private final Map<RoomType, Integer> countPerRoomType;
     private final Map<RoomType, List<Room>> roomMap;
     private final Map<Profile, Integer> electiveCountPerProfile;
     private final int classCapacity;
@@ -78,10 +78,11 @@ public class TestDataGenerator {
         this.lessonsPerDay = lessonsPerDay;
         this.seed = seed;
 
+        roomMap = generateRooms();
+        countPerRoomType = getCountPerRoomType();
         groupCreator = new GroupCreator();
         random = new Random(seed);
-        roomMap = generateRooms();
-        indexPerType = getIndexMap();
+
 
         validate();
     }
@@ -100,6 +101,7 @@ public class TestDataGenerator {
         return new TestData(
                 rooms,
                 teacherPool,
+                countPerRoomType,
                 students,
                 subjectGroups,
                 requiredPerWeek,
@@ -108,6 +110,16 @@ public class TestDataGenerator {
                 zobristHashing);
     }
 
+
+    private Map<RoomType, Integer> getCountPerRoomType() {
+        Map<RoomType, Integer> result = new EnumMap<>(RoomType.class);
+
+        for (RoomType type : RoomType.values()) {
+            result.put(type, roomMap.get(type).size());
+        }
+
+        return result;
+    }
 
     private List<Room> getAllRooms() {
         List<Room> result = new ArrayList<>();
@@ -170,16 +182,6 @@ public class TestDataGenerator {
                 throw new IllegalArgumentException("No elective subject count key for profile: " + profile);
             }
         }
-    }
-
-    private Map<RoomType, Integer> getIndexMap() {
-        Map<RoomType, Integer> result = new HashMap<>();
-
-        for (RoomType type : RoomType.values()) {
-            result.put(type, 0);
-        }
-
-        return result;
     }
 
     private boolean[][] setupAvailability(boolean[] defaultAvail) {
@@ -277,7 +279,6 @@ public class TestDataGenerator {
                         defaultAvailability,
                         availability,
                         Set.of(subject),
-                        Set.of(pickRoom(requiredType)),
                         requiredType);
 
                 teacherPool.get(subject).add(teacher);
@@ -295,7 +296,6 @@ public class TestDataGenerator {
                     defaultAvailability,
                     availability,
                     MATH_SUBJECTS,
-                    Set.of(pickRoom(mathRoomType)),
                     mathRoomType);
 
             for (Subject s : MATH_SUBJECTS) {
@@ -319,17 +319,6 @@ public class TestDataGenerator {
         }
 
         return students;
-    }
-
-    private Room pickRoom(RoomType type) {
-        List<Room> rooms = roomMap.get(type);
-
-        int index = indexPerType.get(type);
-        Room result = rooms.get(index % rooms.size());
-
-        indexPerType.put(type, indexPerType.get(type) + 1);
-
-        return result;
     }
 
     private Set<Subject> getElectiveSubjects(Profile profile) {

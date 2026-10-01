@@ -8,6 +8,7 @@ import java.util.*;
 public record TestData(
         List<Room> rooms,
         Map<Subject, Set<Teacher>> teacherPool,
+        Map<RoomType,Integer> countPerRoomType,
         Set<Student> students,
         Map<Subject, Set<SubjectGroup>> subjectGroups,
         Map<Subject, Integer> requiredPerWeek,

@@ -20,7 +20,7 @@ public class SubjectGroup {
         return teacher;
     }
 
-    public Subject getSubjects() {
+    public Subject getSubject() {
         return subject;
     }
 
@@ -43,5 +43,10 @@ public class SubjectGroup {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    @Override
+    public String toString() {
+        return id + " " + teacher + " " + subject;
     }
 }

@@ -1,5 +1,7 @@
+import berlage.pws.impl.LessonInstanceBuilder;
 import berlage.pws.model.Profile;
 import berlage.pws.model.Subject;
+import berlage.pws.model.SubjectGroup;
 import berlage.pws.util.TestData;
 import berlage.pws.util.TestDataGenerator;
 
@@ -92,5 +94,6 @@ public class Main {
                 lessonsPerDay);
 
         TestData testData = testDataGenerator.build();
+        List<SubjectGroup> groups = LessonInstanceBuilder.build(testData.countPerRoomType(), testData.subjectGroups(), testData.requiredPerWeek());
     }
 }
