@@ -31,7 +31,7 @@ public class ZobristHashing {
         Teacher teacher = group.getTeacher();
         Set<Student> students = group.getStudents();
 
-        int slotIndex = getFlattenedIndex(slot);
+        int slotIndex = slot.getFlatIndex();
 
         for (Student student : students) {
             delta ^= studentSlot[student.getId()][slotIndex];
@@ -59,7 +59,4 @@ public class ZobristHashing {
         fillTable(studentSlot, random);
     }
 
-    private int getFlattenedIndex(Slot slot) {
-        return slot.getDay() * lessonsPerDay + slot.getPeriod();
-    }
 }

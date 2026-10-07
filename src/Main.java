@@ -1,9 +1,13 @@
 import berlage.pws.impl.LessonInstanceBuilder;
+import berlage.pws.impl.PathFinder;
 import berlage.pws.model.Profile;
+import berlage.pws.model.ScheduleState;
 import berlage.pws.model.Subject;
 import berlage.pws.model.SubjectGroup;
+import berlage.pws.util.OutputManager;
 import berlage.pws.util.TestData;
 import berlage.pws.util.TestDataGenerator;
+import berlage.pws.util.TestDataValidator;
 
 import java.util.*;
 
@@ -21,8 +25,9 @@ public class Main {
         final int countRegular = 12;
         final int countLab = 1;
         final int countGym = 1;
-        final int countStudents = 220;
+        final int countStudents = 30;
         final int lessonsPerDay = 9;
+        final int maxCountSubjectPerDay = 2;
         final long seed = 12345;
 
         Set<Subject> electives = EnumSet.of(
@@ -91,9 +96,32 @@ public class Main {
                 countLab,
                 teacherCountPerSubject * 2,
                 countStudents,
-                lessonsPerDay);
+                lessonsPerDay,
+                maxCountSubjectPerDay);
 
         TestData testData = testDataGenerator.build();
         List<SubjectGroup> groups = LessonInstanceBuilder.build(testData.countPerRoomType(), testData.subjectGroups(), testData.requiredPerWeek());
+
+        HashMap<Integer, Integer> load = new HashMap<>();
+        for (SubjectGroup group : groups) {
+            load.put(group.getTeacher().getId(), load.getOrDefault(group.getTeacher().getId(), 0) + 1);
+        }
+
+        for (Map.Entry<Integer, Integer> entry  : load.entrySet()) {
+            System.out.println(entry.getKey() + " " + entry.getValue());
+        }
+
+        TestDataValidator.validate(testData);
+        OutputManager outputManager = new OutputManager(lessonsPerDay, 5, "output.html");
+        PathFinder pathFinder = new PathFinder(false, testData, groups);
+        ScheduleState goalState = pathFinder.find();
+
+        if (goalState == null) {
+            throw new RuntimeException("NULL Schedule");
+        }
+
+        outputManager.outputSchedule(goalState);
+
+
     }
 }

@@ -93,10 +93,6 @@ public class Heap {
             resize();
         }
 
-        if (contains(state)) {
-            return;
-        }
-
         heap[currentSize] = state;
         indexMap.put(state, currentSize);
         siftUp(currentSize);

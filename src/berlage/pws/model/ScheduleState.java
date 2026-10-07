@@ -41,6 +41,10 @@ public class ScheduleState {
         return hCost + gCost;
     }
 
+    public long getHash() {
+        return hash;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

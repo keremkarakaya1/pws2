@@ -47,6 +47,6 @@ public class SubjectGroup {
 
     @Override
     public String toString() {
-        return id + " " + teacher + " " + subject;
+        return "id " + id + " teacherID: " +  teacher + " Subject: " + subject;
     }
 }

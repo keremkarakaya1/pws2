@@ -5,10 +5,16 @@ import java.util.Objects;
 public class Slot {
     private final int day;
     private final int period;
+    private final int flatIndex;
 
-    public Slot(int day, int period) {
+    public Slot(int day, int period, int flatIndex) {
         this.day = day;
         this.period = period;
+        this.flatIndex = flatIndex;
+    }
+
+    public int getFlatIndex() {
+        return flatIndex;
     }
 
     public int getDay() {

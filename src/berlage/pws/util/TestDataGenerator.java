@@ -21,6 +21,7 @@ public class TestDataGenerator {
     private final int countStudents;
     private final int lessonsPerDay;
     private final int countMathTeachers;
+    private final int maxCountSubjectPerDay;
     private final Random random;
     private final long seed;
     private static final int DAYS = 5;
@@ -63,7 +64,8 @@ public class TestDataGenerator {
                              int countLab,
                              int countMathTeachers,
                              int countStudents,
-                             int lessonsPerDay) {
+                             int lessonsPerDay,
+                             int maxCountSubjectPerDay) {
 
         this.electiveSubjects = electiveSubjects;
         this.profiles = profiles;
@@ -76,6 +78,7 @@ public class TestDataGenerator {
         this.countStudents = countStudents;
         this.countMathTeachers = countMathTeachers;
         this.lessonsPerDay = lessonsPerDay;
+        this.maxCountSubjectPerDay = maxCountSubjectPerDay;
         this.seed = seed;
 
         roomMap = generateRooms();
@@ -88,25 +91,30 @@ public class TestDataGenerator {
     }
 
     public TestData build() {
+        Slot[] slots = createSlots();
         List<Room> rooms = getAllRooms();
         Map<Subject, Set<Teacher>> teacherPool = createTeachers();
         Set<Student> students = createStudents();
         Map<Subject, Set<SubjectGroup>> subjectGroups =
-                groupCreator.createGroups(students, teacherPool, classCapacity);
+                groupCreator.createGroups(students, teacherPool, requiredPerWeek, lessonsPerDay, classCapacity);
 
         ZobristHashing zobristHashing = new ZobristHashing(
                 lessonsPerDay, DAYS, getTeacherCount(teacherPool),
                 rooms.size(), countStudents, seed + 1);
 
         return new TestData(
-                rooms,
+                roomMap,
                 teacherPool,
                 countPerRoomType,
                 students,
                 subjectGroups,
                 requiredPerWeek,
+                slots,
+                rooms.size(),
+                getTeacherCount(teacherPool),
                 lessonsPerDay,
                 DAYS,
+                maxCountSubjectPerDay,
                 zobristHashing);
     }
 
@@ -153,6 +161,10 @@ public class TestDataGenerator {
 
         if (Subject.values().length != requiredPerWeek.size()) {
             throw new IllegalArgumentException("INVALID INPUT: required per week map size doesn't match");
+        }
+
+        if (maxCountSubjectPerDay <= 0) {
+            throw new IllegalArgumentException("INVALID INPUT: divide by 0 -- maxCountSubjectPerDay");
         }
 
         if (countStudents <= 0) {
@@ -219,24 +231,52 @@ public class TestDataGenerator {
         return map;
     }
 
-    private boolean[] generateDefaultAvailability() {
+    private boolean[] generateDefaultAvailability(Set<Subject> subjects) {
         boolean[] arr = new boolean[DAYS];
 
         for (int i = 0; i < arr.length; i++) {
             arr[i] = random.nextBoolean();
         }
 
-        boolean zeroAvailable = true;
+        int count = 0;
+        int missing = 0;
 
         for (boolean b : arr) {
             if (b) {
-                zeroAvailable = false;
-                break;
+                count++;
             }
         }
 
-        if (zeroAvailable) {
-            arr[random.nextInt(DAYS)] = true;
+        for (Subject subject : subjects) {
+            int required = requiredPerWeek.get(subject);
+
+            if (count < Math.ceil((double) required / maxCountSubjectPerDay)) {
+                missing = (int) Math.max(missing, Math.ceil((double) required / maxCountSubjectPerDay) - count);
+            }
+        }
+
+        if (missing == 0) {
+            return arr;
+        }
+
+        List<Integer> freeIndexes = new ArrayList<>();
+
+        for (int i = 0; i < arr.length; i++) {
+            if (!arr[i]) {
+                freeIndexes.add(i);
+            }
+        }
+
+        if (missing > freeIndexes.size()) {
+            throw new IllegalArgumentException("TEACHER AVAILABILITY GENERATOR FAIL: subject can't fit in " + DAYS + " days at this cap");
+        }
+
+        while (missing > 0) {
+            int selectedIndex = random.nextInt(freeIndexes.size());
+            arr[freeIndexes.get(selectedIndex)] = true;
+            freeIndexes.remove(selectedIndex);
+
+            missing--;
         }
 
         return arr;
@@ -271,11 +311,12 @@ public class TestDataGenerator {
             RoomType requiredType = roomTypeMap.get(subject);
 
             for (int i = 0; i < teacherCountPerSubject; i++) {
-                boolean[] defaultAvailability = generateDefaultAvailability();
+                boolean[] defaultAvailability = generateDefaultAvailability(Set.of(subject));
                 boolean[][] availability = setupAvailability(defaultAvailability);
 
                 Teacher teacher = new Teacher(
                         id++,
+                        countAvailability(defaultAvailability),
                         defaultAvailability,
                         availability,
                         Set.of(subject),
@@ -288,11 +329,12 @@ public class TestDataGenerator {
         RoomType mathRoomType = roomTypeMap.get(Subject.WISKUNDE_A);
 
         for (int i = 0; i < countMathTeachers; i++) {
-            boolean[] defaultAvailability = generateDefaultAvailability();
+            boolean[] defaultAvailability = generateDefaultAvailability(MATH_SUBJECTS);
             boolean[][] availability = setupAvailability(defaultAvailability);
 
             Teacher teacher = new Teacher(
                     id++,
+                    countAvailability(defaultAvailability),
                     defaultAvailability,
                     availability,
                     MATH_SUBJECTS,
@@ -304,6 +346,16 @@ public class TestDataGenerator {
         }
 
         return teacherPool;
+    }
+
+    private Slot[] createSlots() {
+        Slot[] slots = new Slot[DAYS * lessonsPerDay];
+
+        for (int i = 0; i < slots.length; i++) {
+            slots[i] = new Slot(i / lessonsPerDay, i % lessonsPerDay, i);
+        }
+
+        return slots;
     }
 
     private Set<Student> createStudents() {
@@ -344,5 +396,17 @@ public class TestDataGenerator {
         }
 
         return result;
+    }
+
+    private int countAvailability(boolean[] arr) {
+        int count = 0;
+
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i]) {
+                count++;
+            }
+        }
+
+        return count;
     }
 }

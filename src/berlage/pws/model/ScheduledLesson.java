@@ -23,4 +23,9 @@ public class ScheduledLesson {
     public Room getRoom() {
         return room;
     }
+
+    @Override
+    public String toString() {
+        return group +  " "  + room;
+    }
 }

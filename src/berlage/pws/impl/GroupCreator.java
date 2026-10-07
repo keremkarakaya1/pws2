@@ -16,7 +16,7 @@ public class GroupCreator {
             })
             .thenComparingInt(Student::getId);
 
-    public Map<Subject, Set<SubjectGroup>> createGroups(Set<Student> students, Map<Subject, Set<Teacher>> teacherPool , int classCapacity) {
+    public Map<Subject, Set<SubjectGroup>> createGroups(Set<Student> students, Map<Subject, Set<Teacher>> teacherPool, Map<Subject, Integer> requiredPerWeek, int lessonsPerDay, int classCapacity) {
         Map<Subject, Set<SubjectGroup>> result = new EnumMap<>(Subject.class);
         Map<Subject, Set<Student>> demandMap = new EnumMap<>(Subject.class);
         Map<Subject, Integer> countPerSubject = new EnumMap<>(Subject.class);
