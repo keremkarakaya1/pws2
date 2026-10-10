@@ -21,11 +21,11 @@ public class Main {
 
     public static void main(String[] args) {
         final int classCapacity = 30;
-        final int teacherCountPerSubject = 2;
+        final int teacherCountPerSubject = 3;
         final int countRegular = 12;
-        final int countLab = 1;
-        final int countGym = 1;
-        final int countStudents = 30;
+        final int countLab = 2;
+        final int countGym = 2;
+        final int countStudents = 120;
         final int lessonsPerDay = 9;
         final int maxCountSubjectPerDay = 2;
         final long seed = 12345;

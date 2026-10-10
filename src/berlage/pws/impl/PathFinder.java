@@ -1,6 +1,7 @@
 package berlage.pws.impl;
 
 import berlage.pws.model.*;
+import berlage.pws.util.CostManager;
 import berlage.pws.util.Heap;
 import berlage.pws.util.Occupancy;
 import berlage.pws.util.TestData;
@@ -48,7 +49,7 @@ public class PathFinder {
         int maxDepth = 0;
         int maxHeapSize = 0;
         int lastSeenIndex = 0;
-        System.out.println(lessonsInstances.size());
+        int cannotPlaceCount = 0;
 
         while (!openHeap.isEmpty()) {
             ScheduleState state = openHeap.poll();
@@ -57,9 +58,11 @@ public class PathFinder {
             closedSet.add(state.getHash());
 
             if (state.getIndex() == lessonsInstances.size()) {
-                System.out.println(pollCount);
-                System.out.println(maxDepth);
-                System.out.println(maxHeapSize);
+                System.out.println("pollCount: " + pollCount);
+                System.out.println("maxDepth: " + maxDepth);
+                System.out.println("maxHeapSize: " + maxHeapSize);
+                System.out.println("closedSet: " + closedSet.size());
+                System.out.println("HEAP size: " + openHeap.size());
                 System.out.println(lessonsInstances.size());
                 return state;
             }
@@ -71,7 +74,9 @@ public class PathFinder {
                 System.out.println(index);
                 System.out.println(state.getPlacedLesson().getGroup());
                 System.out.println(state.getPlacedLesson().getRoom().getType());
-
+                System.out.println("cannotPlaceCount: " +cannotPlaceCount);
+                System.out.println("HEAP size: " + openHeap.size());
+                System.out.println("closedSet: " + closedSet.size());
             }
 
             maxHeapSize = Math.max(maxHeapSize, openHeap.size());
@@ -82,7 +87,6 @@ public class PathFinder {
             for (Slot slot : slots) {
                 //List<Room> matchingRooms = roomMap.get(group.getTeacher().getTypeRequirement());
                 //currently picking first available room
-                //todo implement checks and cost
                 Room room = getFreeRoom(requiredType, slot);
 
                 if (room == null) {
@@ -90,13 +94,14 @@ public class PathFinder {
                 }
 
                 if (!occupancy.canPlace(group, slot)) {
+                    cannotPlaceCount++;
                     continue;
                 }
 
                 ScheduledLesson scheduledLesson = new ScheduledLesson(group, slot, room);
                 long delta = zobristHashing.hashFor(scheduledLesson);
                 int hCost = 0;
-                int gCost = 0;
+                int gCost = state.getGCost() + CostManager.calculateCost(occupancy, scheduledLesson);
 
 
 
@@ -125,7 +130,7 @@ public class PathFinder {
         List<Room> rooms = roomMap.get(type);
 
         for (Room room : rooms) {
-            if (!occupancy.isRoomBusy(room.getId(), slot)) {
+            if (!occupancy.isRoomBusy(room, slot)) {
                 return room;
             }
         }

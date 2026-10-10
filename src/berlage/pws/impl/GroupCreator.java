@@ -39,7 +39,7 @@ public class GroupCreator {
         for (Map.Entry<Subject, Set<Student>> entry : demandMap.entrySet()) {
             Set<Student> set = entry.getValue();
             Subject subject = entry.getKey();
-            countPerSubject.put(subject, (int) Math.ceil((double)set.size() / classCapacity));
+            countPerSubject.put(subject, (int) Math.ceil((double) set.size() / classCapacity));
         }
 
         for (Map.Entry<Subject, Set<Student>> entry : demandMap.entrySet()) {
@@ -65,20 +65,52 @@ public class GroupCreator {
         }
 
         int id = 0;
+        Map<Teacher, Integer> teacherLoad = new HashMap<>();
+        Map<Teacher, Integer> availableDays = new HashMap<>();
 
         for (Map.Entry<Subject, List<Set<Student>>> entry : groupsPerSubject.entrySet()) {
             Subject subject = entry.getKey();
             List<Set<Student>> groups = entry.getValue();
             List<Teacher> teachers = new ArrayList<>(teacherPool.get(subject));
-            teachers.sort(Comparator.comparingInt(Teacher::getId));
+
+            for (Teacher teacher : teachers) {
+                availableDays.computeIfAbsent(teacher, GroupCreator::countAvailableDays);
+            }
+
+            PriorityQueue<Teacher> pq = new PriorityQueue<>(
+                    Comparator.comparingDouble((Teacher t) ->
+                                    (double) teacherLoad.getOrDefault(t, 0) / availableDays.get(t))
+                            .thenComparingInt(Teacher::getId));
+
+            for (Teacher teacher : teachers) {
+                pq.offer(teacher);
+            }
 
             Set<SubjectGroup> subjectGroups = new HashSet<>();
-            int counter = 0;
+            int lessons = requiredPerWeek.get(subject);
 
             for (Set<Student> group : groups) {
-                Teacher teacher = teachers.get(counter % teachers.size());
+                Teacher teacher = null;
+
+                while (!pq.isEmpty()) {
+                    Teacher candidate = pq.poll();
+                    int capacity = availableDays.get(candidate) * lessonsPerDay;
+
+                    if (teacherLoad.getOrDefault(candidate, 0) + lessons <= capacity) {
+                        teacher = candidate;
+                        break;
+                    }
+                }
+
+                if (teacher == null) {
+                    throw new IllegalArgumentException(
+                            "GROUP CREATOR FAIL: no teacher has capacity left for subject " + subject);
+                }
+
+                teacherLoad.put(teacher, teacherLoad.getOrDefault(teacher, 0) + lessons);
+                pq.offer(teacher);
+
                 subjectGroups.add(new SubjectGroup(teacher, subject, group, id++));
-                counter++;
             }
 
             result.put(subject, subjectGroups);
@@ -86,4 +118,17 @@ public class GroupCreator {
 
         return result;
     }
+
+    private static int countAvailableDays(Teacher teacher) {
+        int count = 0;
+
+        for (boolean b : teacher.getDefaultAvailable()) {
+            if (b) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
 }

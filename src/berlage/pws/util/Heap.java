@@ -74,9 +74,11 @@ public class Heap {
         int indexFirst = first.getIndex();
         int indexSecond = second.getIndex();
 
+
         if (indexFirst != indexSecond) {
             return indexFirst > indexSecond;
         }
+
 
         int costFirst = first.getTotalCost();// + first.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
         int costSecond = second.getTotalCost();// + second.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
