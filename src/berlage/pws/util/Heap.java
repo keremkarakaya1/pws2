@@ -13,6 +13,11 @@ public class Heap {
     private ScheduleState[] heap = new ScheduleState[fullSize];
     private final HashMap<ScheduleState, Integer> indexMap = new HashMap<>();
     private int currentSize = 0;
+    private final boolean depthBased;
+
+    public Heap(boolean depthBased) {
+        this.depthBased = depthBased;
+    }
 
 
     private int getLeftChild(int index) {
@@ -74,14 +79,14 @@ public class Heap {
         int indexFirst = first.getIndex();
         int indexSecond = second.getIndex();
 
-
-        if (indexFirst != indexSecond) {
-            return indexFirst > indexSecond;
+        if (depthBased) {
+            if (indexFirst != indexSecond) {
+                return indexFirst > indexSecond;
+            }
         }
 
-
-        int costFirst = first.getTotalCost();// + first.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
-        int costSecond = second.getTotalCost();// + second.spreadPenalty() * PathFinder.SPREAD_WEIGHT;
+        int costFirst = first.getTotalCost();
+        int costSecond = second.getTotalCost();
 
         return costFirst < costSecond;
     }

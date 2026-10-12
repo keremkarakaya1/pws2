@@ -1,48 +1,28 @@
 package berlage.pws.impl;
 
 import berlage.pws.model.*;
-import berlage.pws.util.CostManager;
 import berlage.pws.util.Heap;
-import berlage.pws.util.Occupancy;
 import berlage.pws.util.TestData;
 
 import java.util.*;
 
-public class PathFinder {
+public class PathFinder implements Search {
     private final Heap openHeap;
     private final Set<Long> closedSet;
+    private final ChildGenerator childGenerator;
+    private final List<SubjectGroup> lessonInstances;
     private final ScheduleState initialState;
-    private final Occupancy occupancy;
-    private final ZobristHashing zobristHashing;
-    private final List<SubjectGroup> lessonsInstances;
-    private final Map<RoomType, List<Room>> roomMap;
-    private final Slot[] slots;
 
-    public PathFinder(boolean heuristic, TestData data, List<SubjectGroup> lessonsInstances) {
-        this.lessonsInstances = lessonsInstances;
-
-        int groupCount = 0;
-        for (Set<SubjectGroup> set : data.subjectGroups().values()) {
-            groupCount += set.size();
-        }
-
-        openHeap = new Heap();
-        occupancy = new Occupancy(
-                data.teacherCount(),
-                data.roomCount(),
-                data.students().size(),
-                data.lessonsPerDay(),
-                data.days(),
-                data.maxSameSubjectCountPerDay(),
-                groupCount);
+    public PathFinder(List<SubjectGroup> lessonsInstances, TestData data, boolean heuristic, boolean depthBased) {
+        openHeap = new Heap(depthBased);
+        closedSet = new HashSet<>();
+        childGenerator = new ChildGenerator(lessonsInstances, data);
 
         initialState = new ScheduleState(null, null, 0,0,0,0);
-        closedSet = new HashSet<>();
-        zobristHashing = data.zobristHashing();
-        roomMap = data.roomMap();
-        slots = data.slots();
+        this.lessonInstances = childGenerator.getLessonInstances();
     }
 
+    @Override
     public ScheduleState find() {
         openHeap.offer(initialState);
         int pollCount = 0;
@@ -53,17 +33,21 @@ public class PathFinder {
 
         while (!openHeap.isEmpty()) {
             ScheduleState state = openHeap.poll();
-            pollCount++;
-            occupancy.buildFullState(state);
             closedSet.add(state.getHash());
+            pollCount++;
 
-            if (state.getIndex() == lessonsInstances.size()) {
+            if (state.getIndex() == lessonInstances.size()) {
                 System.out.println("pollCount: " + pollCount);
                 System.out.println("maxDepth: " + maxDepth);
                 System.out.println("maxHeapSize: " + maxHeapSize);
                 System.out.println("closedSet: " + closedSet.size());
                 System.out.println("HEAP size: " + openHeap.size());
-                System.out.println(lessonsInstances.size());
+                System.out.println(lessonInstances.size());
+
+                for (int i = 0; i < 5; i++) {
+                    System.out.println();
+                }
+
                 return state;
             }
 
@@ -81,57 +65,11 @@ public class PathFinder {
 
             maxHeapSize = Math.max(maxHeapSize, openHeap.size());
             maxDepth = Math.max(maxDepth, index);
-            SubjectGroup group = lessonsInstances.get(index);
-            RoomType requiredType = group.getTeacher().getTypeRequirement();
 
-            for (Slot slot : slots) {
-                //List<Room> matchingRooms = roomMap.get(group.getTeacher().getTypeRequirement());
-                //currently picking first available room
-                Room room = getFreeRoom(requiredType, slot);
+            List<ScheduleState> childStates = childGenerator.generateChildren(state);
 
-                if (room == null) {
-                    continue;
-                }
-
-                if (!occupancy.canPlace(group, slot)) {
-                    cannotPlaceCount++;
-                    continue;
-                }
-
-                ScheduledLesson scheduledLesson = new ScheduledLesson(group, slot, room);
-                long delta = zobristHashing.hashFor(scheduledLesson);
-                int hCost = 0;
-                int gCost = state.getGCost() + CostManager.calculateCost(occupancy, scheduledLesson);
-
-
-
-                ScheduleState childState = new ScheduleState(
-                        state,
-                        scheduledLesson,
-                        hCost,
-                        gCost,
-                        index + 1,
-                        delta);
-
-                if (closedSet.contains(childState.getHash())) {
-                    continue;
-                }
-
-                openHeap.offer(childState);
-            }
-
-
-        }
-
-        return null;
-    }
-
-    private Room getFreeRoom(RoomType type, Slot slot) {
-        List<Room> rooms = roomMap.get(type);
-
-        for (Room room : rooms) {
-            if (!occupancy.isRoomBusy(room, slot)) {
-                return room;
+            for (ScheduleState child : childStates) {
+                openHeap.offer(child);
             }
         }
 

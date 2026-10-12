@@ -1,3 +1,4 @@
+import berlage.pws.impl.BeamSearch;
 import berlage.pws.impl.LessonInstanceBuilder;
 import berlage.pws.impl.PathFinder;
 import berlage.pws.model.Profile;
@@ -19,16 +20,28 @@ public class Main {
         return Set.copyOf(result);
     }
 
+    //TODO MAKE GYM always block hour
+
     public static void main(String[] args) {
         final int classCapacity = 30;
         final int teacherCountPerSubject = 3;
         final int countRegular = 12;
         final int countLab = 2;
         final int countGym = 2;
-        final int countStudents = 120;
+        final int breakCount = 3;
+        final int countStudents = 100;
         final int lessonsPerDay = 9;
         final int maxCountSubjectPerDay = 2;
         final long seed = 12345;
+
+        final boolean[] lessonPositions = new boolean[breakCount + lessonsPerDay];
+        final Set<Integer> breakPositions = Set.of(2, 5, 8);
+
+        for (int i = 0; i < lessonPositions.length; i++) {
+            lessonPositions[i] = !breakPositions.contains(i);
+        }
+
+        System.out.println(Arrays.toString(lessonPositions));
 
         Set<Subject> electives = EnumSet.of(
             Subject.FRANS, Subject.DUITS,
@@ -112,16 +125,26 @@ public class Main {
         }
 
         TestDataValidator.validate(testData);
-        OutputManager outputManager = new OutputManager(lessonsPerDay, 5, "output.html");
-        PathFinder pathFinder = new PathFinder(false, testData, groups);
+        OutputManager outputManagerDFS = new OutputManager(lessonsPerDay, 5, "output.html");
+        OutputManager outputManagerBeam = new OutputManager(lessonsPerDay, 5, "outputBEAM.html");
+        PathFinder pathFinder = new PathFinder(groups, testData, false, true);
+        BeamSearch beamSearch = new BeamSearch(groups, testData, 15000);
+        //15000 best at 2.5
         ScheduleState goalState = pathFinder.find();
+        ScheduleState goalBeam = beamSearch.find();
+
 
         if (goalState == null) {
-            throw new RuntimeException("NULL Schedule");
+            //throw new RuntimeException("NULL Schedule");
+            System.out.println("DFS NULL SCHEDULE");
         }
 
-        outputManager.outputSchedule(goalState);
 
+        if (goalBeam == null) {
+            System.out.println("BEAM NULL SCHEDULE");
+        }
 
+        outputManagerDFS.outputSchedule(goalState);
+        outputManagerBeam.outputSchedule(goalBeam);
     }
 }

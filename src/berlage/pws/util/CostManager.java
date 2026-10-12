@@ -6,7 +6,7 @@ import berlage.pws.model.Student;
 import berlage.pws.model.SubjectGroup;
 
 public final class CostManager {
-    private static final int SPAN_WEIGHT = 3;
+    private static final int SPAN_WEIGHT = 5;
     private static final int SPREAD_WEIGHT = 1;
 
     private CostManager() {}
