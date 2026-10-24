@@ -13,10 +13,10 @@ public class PathFinder implements Search {
     private final List<SubjectGroup> lessonInstances;
     private final ScheduleState initialState;
 
-    public PathFinder(List<SubjectGroup> lessonsInstances, TestData data, boolean heuristic, boolean depthBased) {
+    public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced) {
         openHeap = new Heap(depthBased);
         closedSet = new HashSet<>();
-        childGenerator = new ChildGenerator(lessonsInstances, data);
+        childGenerator = new ChildGenerator(data, true, true, heuristic, advanced);
 
         initialState = new ScheduleState(null, null, 0,0,0,0);
         this.lessonInstances = childGenerator.getLessonInstances();
@@ -33,6 +33,11 @@ public class PathFinder implements Search {
 
         while (!openHeap.isEmpty()) {
             ScheduleState state = openHeap.poll();
+
+            if (closedSet.contains(state.getHash())) {
+                continue;
+            }
+
             closedSet.add(state.getHash());
             pollCount++;
 
@@ -44,10 +49,6 @@ public class PathFinder implements Search {
                 System.out.println("HEAP size: " + openHeap.size());
                 System.out.println(lessonInstances.size());
 
-                for (int i = 0; i < 5; i++) {
-                    System.out.println();
-                }
-
                 return state;
             }
 
@@ -55,10 +56,13 @@ public class PathFinder implements Search {
 
             if (index > lastSeenIndex) {
                 lastSeenIndex = index;
+
+
                 System.out.println(index);
-                System.out.println(state.getPlacedLesson().getGroup());
-                System.out.println(state.getPlacedLesson().getRoom().getType());
-                System.out.println("cannotPlaceCount: " +cannotPlaceCount);
+
+                //System.out.println(state.getPlacedLesson().getGroup());
+                //System.out.println(state.getPlacedLesson().getRoom().getType());
+                System.out.println("cannotPlaceCount: " + childGenerator.cannotPlaceCount);
                 System.out.println("HEAP size: " + openHeap.size());
                 System.out.println("closedSet: " + closedSet.size());
             }
@@ -73,6 +77,6 @@ public class PathFinder implements Search {
             }
         }
 
-        return null;
+        throw new RuntimeException("NO SCHEDULE FOUND");
     }
 }

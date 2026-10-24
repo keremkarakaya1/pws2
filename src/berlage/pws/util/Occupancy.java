@@ -12,6 +12,7 @@ public class Occupancy {
     private final int[][] studentDayCount;
     private final int maxCountPerDay;
     private final int lessonsPerDay;
+    private final int days;
 
     public Occupancy(int teacherCount, int roomCount, int studentCount, int lessonsPerDay, int days, int maxCountPerDay, int groupCount) {
         teacherOccupied = new boolean[teacherCount][days * lessonsPerDay];
@@ -22,10 +23,52 @@ public class Occupancy {
 
         this.maxCountPerDay = maxCountPerDay;
         this.lessonsPerDay = lessonsPerDay;
+        this.days = days;
     }
 
     public int getLessonCountOfStudentOnDay(Student student, int day) {
         return studentDayCount[student.getId()][day];
+    }
+
+    public boolean[] getStudentScheduleOnDay(Student student, int day) {
+        if (getLessonCountOfStudentOnDay(student,day) == 0) {
+            throw new IllegalStateException("EMPTY DAY");
+        }
+
+        boolean[] studentSlots = studentOccupied[student.getId()];
+        int startingIndex = day * lessonsPerDay;
+        int endingIndex = day * lessonsPerDay + lessonsPerDay - 1;
+
+        while (endingIndex > startingIndex && !studentSlots[endingIndex]) {
+            endingIndex--;
+        }
+
+        boolean[] result = new boolean[endingIndex - startingIndex + 1];
+
+        for (int i = 0; i < result.length; i++) {
+            result[i] = studentSlots[startingIndex++];
+        }
+
+        return result;
+    }
+
+    public void updateOccupancy(ScheduledLesson lesson, boolean place) {
+        SubjectGroup group = lesson.getGroup();
+        Teacher teacher = group.getTeacher();
+        Room room = lesson.getRoom();
+        Slot slot = lesson.getSlot();
+        int flatIndex = slot.getFlatIndex();
+        int day = slot.getDay();
+        int change = place ? 1 : -1;
+
+        teacherOccupied[teacher.getId()][flatIndex] = place;
+        roomOccupied[room.getId()][flatIndex] = place;
+        countAssigned[group.getId()][day] += change;
+
+        for (Student student : group.getStudents()) {
+            studentOccupied[student.getId()][flatIndex] = place;
+            studentDayCount[student.getId()][day] += change;
+        }
     }
 
     public int getFirstOccupiedPeriod(Student student, int day) {
@@ -56,7 +99,11 @@ public class Occupancy {
         throw new IllegalStateException("OCCUPANCY FAIL: empty day check fail (LAST)");
     }
 
-    private boolean isTeacherBusy(Teacher teacher, Slot slot) {
+    public boolean isTeacherBusy(Teacher teacher, int day, int index) {
+        return teacherOccupied[teacher.getId()][day * lessonsPerDay + index];
+    }
+
+    public boolean isTeacherBusy(Teacher teacher, Slot slot) {
         return teacherOccupied[teacher.getId()][slot.getFlatIndex()];
     }
 
@@ -98,19 +145,8 @@ public class Occupancy {
 
         while (temp != null && temp.getPlacedLesson() != null) {
             ScheduledLesson lesson = temp.getPlacedLesson();
-            SubjectGroup group = lesson.getGroup();
-            int flatIndex = lesson.getSlot().getFlatIndex();
-            int dayIndex = lesson.getSlot().getDay();
 
-            roomOccupied[lesson.getRoom().getId()][flatIndex] = true;
-            teacherOccupied[group.getTeacher().getId()][flatIndex] = true;
-            countAssigned[group.getId()][dayIndex]++;
-
-            for (Student student : group.getStudents()) {
-                studentOccupied[student.getId()][flatIndex] = true;
-                studentDayCount[student.getId()][dayIndex]++;
-            }
-
+            updateOccupancy(lesson, true);
             temp = temp.getParent();
         }
     }

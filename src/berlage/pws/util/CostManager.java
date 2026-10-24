@@ -1,17 +1,135 @@
 package berlage.pws.util;
 
-import berlage.pws.model.ScheduledLesson;
-import berlage.pws.model.Slot;
-import berlage.pws.model.Student;
-import berlage.pws.model.SubjectGroup;
+import berlage.pws.model.*;
+
+import java.util.List;
 
 public final class CostManager {
-    private static final int SPAN_WEIGHT = 5;
-    private static final int SPREAD_WEIGHT = 1;
+    private static final int SPAN_WEIGHT = 0;
+    private static final int SPREAD_WEIGHT = 0;
+    private static final int GAP_WEIGHT = 10;
 
     private CostManager() {}
 
-    public static int calculateCost(Occupancy occupancy, ScheduledLesson lesson) {
+    public static int calculateAdvancedHCost(Occupancy occupancy,
+                                             ScheduledLesson lesson,
+                                             List<Student> students,
+                                             List<List<SubjectGroup>> subjectGroupsPerStudent,
+                                             int[][] countGroupsToBeScheduledAtIndex,
+                                             int[][] remainingLessonTable,
+                                             int[] studentGapCount,
+                                             int index,
+                                             int days) {
+
+
+
+        int[] updatedStudentGapCounts = studentGapCount.clone();
+        SubjectGroup group = lesson.getGroup();
+        Slot slot = lesson.getSlot();
+        int dayIndex = slot.getDay();
+        int newPeriod = slot.getPeriod();
+        int cost = 0;
+
+        for (Student student : group.getStudents()) {
+            int gapChange = 0;
+
+            if (occupancy.getLessonCountOfStudentOnDay(student, dayIndex) != 0) {
+                gapChange = getHeuristicGapChange(student, occupancy, newPeriod, dayIndex);
+                updatedStudentGapCounts[student.getId()] += gapChange;
+            }
+        }
+
+        occupancy.updateOccupancy(lesson, true);
+
+        for (Student student : students) {
+            int gapCountBefore = updatedStudentGapCounts[student.getId()];
+            int lessonsLeft = remainingLessonTable[student.getId()][index];
+
+            for (int i = 0; i < days; i++) {
+                if (occupancy.getLessonCountOfStudentOnDay(student,i) == 0) {
+                    continue;
+                }
+
+                int j = 0;
+                boolean[] lessons = occupancy.getStudentScheduleOnDay(student, i);
+
+                while (j < lessons.length && !lessons[j]) {
+                    j++;
+                }
+
+                for ( ; j < lessons.length; j++) {
+                    if (lessons[j]) {
+                        continue;
+                    }
+
+                    List<SubjectGroup> groupsOfStudent = subjectGroupsPerStudent.get(student.getId());
+                    boolean found = false;
+
+                    for (SubjectGroup subjectGroup : groupsOfStudent) {
+                        Teacher teacher = subjectGroup.getTeacher();
+
+                        if (countGroupsToBeScheduledAtIndex[subjectGroup.getId()][index] > 0 &&
+                            !occupancy.isTeacherBusy(teacher, i, j) &&
+                            teacher.isAvailable(i,j)) {
+
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        gapCountBefore--;
+                    }
+                }
+            }
+
+            int forcedGapCount = Math.max(0, lessonsLeft - gapCountBefore);
+            cost += forcedGapCount * GAP_WEIGHT;
+        }
+
+        occupancy.updateOccupancy(lesson, false);
+        return cost;
+
+
+    }
+
+    public static int calculateHCost(Occupancy occupancy,
+                                     ScheduledLesson lesson,
+                                     List<Student> students,
+                                     int[][] remainingLessonTable,
+                                     int[] studentGapCount,
+                                     int index) {
+
+
+        SubjectGroup group = lesson.getGroup();
+        Slot slot = lesson.getSlot();
+        int dayIndex = slot.getDay();
+        int newPeriod = slot.getPeriod();
+        int cost = 0;
+
+        for (Student student : students) {
+            int gapCountBefore = studentGapCount[student.getId()];
+            int gapChange = 0;
+
+            if (group.contains(student) && occupancy.getLessonCountOfStudentOnDay(student, dayIndex) != 0) {
+                gapChange = getHeuristicGapChange(student, occupancy, newPeriod, dayIndex);
+            }
+
+            int lessonsLeft = remainingLessonTable[student.getId()][index];
+            int countLessonsForcedToExtendDay = Math.max(0, lessonsLeft - (gapCountBefore + gapChange));
+
+            cost += countLessonsForcedToExtendDay * GAP_WEIGHT;
+        }
+
+        return cost;
+    }
+
+    public static int calculateGCost(Occupancy occupancy,
+                                     ScheduledLesson lesson,
+                                     boolean gapPenalty,
+                                     boolean gapOnly) {
+
+
         SubjectGroup group = lesson.getGroup();
         Slot slot = lesson.getSlot();
         int newPeriod = slot.getPeriod();
@@ -22,7 +140,12 @@ public final class CostManager {
             int lessonCount = occupancy.getLessonCountOfStudentOnDay(student, dayIndex);
 
             if (lessonCount == 0) {
-                cost += SPAN_WEIGHT + SPREAD_WEIGHT;
+                if (!gapOnly) {
+                    cost += slot.getPeriod() + GAP_WEIGHT;
+                } else {
+                    cost += GAP_WEIGHT;
+                }
+
                 continue;
             }
 
@@ -32,13 +155,61 @@ public final class CostManager {
             int newFirst = Math.min(firstPeriod, newPeriod);
             int newLast = Math.max(lastPeriod, newPeriod);
 
-            int spanCostDelta = ((newLast - newFirst) - (lastPeriod - firstPeriod));
-            int weightedSpanDelta = spanCostDelta * SPAN_WEIGHT;
+            int spanDelta = ((newLast - newFirst) - (lastPeriod - firstPeriod));
+            //int weightedSpanDelta = spanCostDelta * SPAN_WEIGHT;
 
-            int spreadCostDelta = 2 * lessonCount + 1;
-            int weightedSpreadCostDelta = spreadCostDelta * SPREAD_WEIGHT;
+            int gapCost = 0;
 
-            cost += weightedSpanDelta + weightedSpreadCostDelta;
+            if (gapPenalty) {
+                if (spanDelta == 0) {
+                    gapCost = 0;
+                } else {
+                    gapCost += Math.max(firstPeriod - newFirst, newLast - lastPeriod);
+                }
+            }
+
+            int weightedGapCost = gapCost * GAP_WEIGHT;
+
+            //int spreadCostDelta = 2 * lessonCount + 1;
+            //int weightedSpreadCostDelta = spreadCostDelta * SPREAD_WEIGHT;
+
+            cost += weightedGapCost; //weightedSpanDelta + weightedSpreadCostDelta
+        }
+
+        return cost;
+    }
+
+    private static int getHeuristicGapChange(Student student, Occupancy occupancy,int newPeriod, int dayIndex) {
+        int firstPeriod = occupancy.getFirstOccupiedPeriod(student, dayIndex);
+        int lastPeriod = occupancy.getLastOccupiedPeriod(student, dayIndex);
+
+        int newFirst = Math.min(firstPeriod, newPeriod);
+        int newLast = Math.max(lastPeriod, newPeriod);
+
+        int gapChange = ((newLast - newFirst) - (lastPeriod - firstPeriod)) - 1;
+
+        return gapChange;
+    }
+
+    public static int convertBeamCost(ScheduledLesson[][][] scheduledLessons) {
+        int cost = 0;
+
+        for (int i = 0; i < scheduledLessons.length; i++) {
+            for (int j = 0; j < scheduledLessons[i].length; j++) {
+
+                int start = 0;
+                int end = scheduledLessons[i][j].length - 1;
+
+                while (start <= end && scheduledLessons[i][j][start] == null) {
+                    start++;
+                }
+
+                while (end >= start && scheduledLessons[i][j][end] == null) {
+                    end--;
+                }
+
+                cost += (end - start + 1) * GAP_WEIGHT;
+            }
         }
 
         return cost;

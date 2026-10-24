@@ -28,6 +28,9 @@ public class SubjectGroup {
         return set;
     }
 
+    public boolean contains(Student student) {
+        return set.contains(student);
+    }
 
     public int getId() {
         return id;

@@ -12,6 +12,8 @@ public class ZobristHashing {
     private final int lessonsPerDay;
     private final int slotCount;
 
+    //TODO add per subjectgroup keying
+
     public ZobristHashing(int lessonsPerDay, int countDays, int countTeachers, int countRooms, int countStudents, long seed) {
         slotCount = lessonsPerDay * countDays;
         this.lessonsPerDay = lessonsPerDay;

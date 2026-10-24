@@ -1,12 +1,14 @@
 package berlage.pws.util;
 
 import berlage.pws.impl.GroupCreator;
+import berlage.pws.impl.LessonInstanceBuilder;
 import berlage.pws.impl.ZobristHashing;
 import berlage.pws.model.*;
 
 import java.util.*;
 
 public class TestDataGenerator {
+    private final Map<Subject, Integer> requiredPerWeek;
     private final GroupCreator groupCreator;
     private final Set<Subject> electiveSubjects;
     private final Set<Profile> profiles;
@@ -24,36 +26,12 @@ public class TestDataGenerator {
     private final int maxCountSubjectPerDay;
     private final Random random;
     private final long seed;
-    private static final int DAYS = 5;
+    private final int days;
     private static final Set<Subject> MATH_SUBJECTS =
             Set.copyOf(EnumSet.of(Subject.WISKUNDE_A, Subject.WISKUNDE_B, Subject.WISKUNDE_C));
 
-    private final Map<Subject, Integer> requiredPerWeek = new EnumMap<>(Map.ofEntries(
-            //TODO input from main -ignored
-            Map.entry(Subject.NEDERLANDS, 4),
-            Map.entry(Subject.ENGELS, 3),
-            Map.entry(Subject.FRANS, 2),
-            Map.entry(Subject.DUITS, 2),
-            Map.entry(Subject.WISKUNDE_A, 4),
-            Map.entry(Subject.WISKUNDE_B, 4),
-            Map.entry(Subject.WISKUNDE_C, 3),
-            Map.entry(Subject.NATUURKUNDE, 3),
-            Map.entry(Subject.SCHEIKUNDE, 3),
-            Map.entry(Subject.BIOLOGIE, 3),
-            Map.entry(Subject.GESCHIEDENIS, 2),
-            Map.entry(Subject.AARDRIJKSKUNDE, 2),
-            Map.entry(Subject.ECONOMIE, 3),
-            Map.entry(Subject.BEDRIJFSECONOMIE, 3),
-            Map.entry(Subject.MAATSCHAPPIJLEER, 2),
-            Map.entry(Subject.CKV, 1),
-            Map.entry(Subject.FILOSOFIE, 2),
-            Map.entry(Subject.KUNST, 2),
-            Map.entry(Subject.LICHAMELIJKE_OPVOEDING, 2)
-    ));
-
-
-
-    public TestDataGenerator(Map<Profile, Integer> electiveCountPerProfile,
+    public TestDataGenerator(Map<Subject, Integer> requiredPerWeek,
+                             Map<Profile, Integer> electiveCountPerProfile,
                              Set<Profile> profiles,
                              Set<Subject> electiveSubjects,
                              long seed,
@@ -65,8 +43,10 @@ public class TestDataGenerator {
                              int countMathTeachers,
                              int countStudents,
                              int lessonsPerDay,
-                             int maxCountSubjectPerDay) {
+                             int maxCountSubjectPerDay,
+                             int days) {
 
+        this.requiredPerWeek = requiredPerWeek;
         this.electiveSubjects = electiveSubjects;
         this.profiles = profiles;
         this.electiveCountPerProfile = electiveCountPerProfile;
@@ -79,6 +59,7 @@ public class TestDataGenerator {
         this.countMathTeachers = countMathTeachers;
         this.lessonsPerDay = lessonsPerDay;
         this.maxCountSubjectPerDay = maxCountSubjectPerDay;
+        this.days = days;
         this.seed = seed;
 
         roomMap = generateRooms();
@@ -98,8 +79,20 @@ public class TestDataGenerator {
         Map<Subject, Set<SubjectGroup>> subjectGroups =
                 groupCreator.createGroups(students, teacherPool, requiredPerWeek, lessonsPerDay, classCapacity);
 
+        int teacherCount = getTeacherCount(teacherPool);
+        int groupCount = 0;
+
+        for (Set<SubjectGroup> set : subjectGroups.values()) {
+            groupCount += set.size();
+        }
+
+        List<SubjectGroup> lessonInstances = LessonInstanceBuilder.build(countPerRoomType, subjectGroups, requiredPerWeek);
+        List<List<SubjectGroup>> subjectGroupsPerStudent = getSubjectGroupsPerStudent(students.size(), lessonInstances);
+        int[][] countGroupsToBeScheduledAtIndex = getCountGroupsToBeScheduled(groupCount, lessonInstances);
+        int[][] lessonsLeft = createLessonCountTable(lessonInstances, students);
+
         ZobristHashing zobristHashing = new ZobristHashing(
-                lessonsPerDay, DAYS, getTeacherCount(teacherPool),
+                lessonsPerDay, days, teacherCount,
                 rooms.size(), countStudents, seed + 1);
 
         return new TestData(
@@ -109,11 +102,16 @@ public class TestDataGenerator {
                 students,
                 subjectGroups,
                 requiredPerWeek,
+                lessonInstances,
+                subjectGroupsPerStudent,
                 slots,
+                countGroupsToBeScheduledAtIndex,
+                lessonsLeft,
+                groupCount,
                 rooms.size(),
-                getTeacherCount(teacherPool),
+                teacherCount,
                 lessonsPerDay,
-                DAYS,
+                days,
                 maxCountSubjectPerDay,
                 zobristHashing);
     }
@@ -139,6 +137,42 @@ public class TestDataGenerator {
         return result;
     }
 
+    private int[][] createLessonCountTable(List<SubjectGroup> lessonInstances, Set<Student> students) {
+        int[][] result = new int[students.size()][lessonInstances.size() + 1];
+
+        for (int i = lessonInstances.size() - 1; i >= 0; i--) {
+            SubjectGroup group = lessonInstances.get(i);
+
+            for (Student student : students) {
+                result[student.getId()][i] = result[student.getId()][i + 1];
+            }
+
+            for (Student student : group.getStudents()) {
+                result[student.getId()][i]++;
+            }
+        }
+
+        return result;
+    }
+
+
+    private int[][] getCountGroupsToBeScheduled(int groupCount, List<SubjectGroup> lessonInstances) {
+        int[][] result = new int[groupCount][lessonInstances.size() + 1];
+
+        for (int j = result[0].length - 2; j >= 0; j--) {
+
+            for (int k = 0; k < result.length; k++) {
+                result[k][j] = result[k][j+1];
+            }
+
+            SubjectGroup group = lessonInstances.get(j);
+
+            result[group.getId()][j]++;
+        }
+
+        return result;
+    }
+
     private int getTeacherCount(Map<Subject, Set<Teacher>> teacherPool) {
         Set<Teacher> distinctSet = new HashSet<>();
 
@@ -151,6 +185,10 @@ public class TestDataGenerator {
     }
 
     private void validate() {
+        if (days <= 0) {
+            throw new IllegalArgumentException("INVALID INPUT: day count must be positive");
+        }
+
         if (classCapacity <= 0) {
             throw new IllegalArgumentException("INVALID INPUT: class capacity must be positive");
         }
@@ -183,6 +221,12 @@ public class TestDataGenerator {
             throw new IllegalArgumentException("INVALID INPUT: Empty profile set");
         }
 
+        int max = Collections.max(requiredPerWeek.values());
+
+        if (max > maxCountSubjectPerDay * days) {
+            throw new IllegalArgumentException("INVALID INPUT: lessons cannot fit in a week -- increase days or lower requiredPerWeek");
+        }
+
         for (RoomType type : RoomType.values()) {
             if (roomMap.get(type).isEmpty()) {
                 throw new IllegalArgumentException("INVALID INPUT: no available rooms with type: " + type);
@@ -197,9 +241,9 @@ public class TestDataGenerator {
     }
 
     private boolean[][] setupAvailability(boolean[] defaultAvail) {
-        boolean[][] avail = new boolean[DAYS][lessonsPerDay];
+        boolean[][] avail = new boolean[days][lessonsPerDay];
 
-        for (int i = 0; i < DAYS; i++) {
+        for (int i = 0; i < days; i++) {
             if (defaultAvail[i]) {
 
                 for (int j = 0; j < lessonsPerDay; j++) {
@@ -209,6 +253,28 @@ public class TestDataGenerator {
         }
 
         return avail;
+    }
+
+    private List<List<SubjectGroup>> getSubjectGroupsPerStudent(int studentCount, List<SubjectGroup> lessonInstances) {
+        List<List<SubjectGroup>> result = new ArrayList<>();
+
+        for (int i = 0; i < studentCount; i++) {
+            result.add(new ArrayList<>());
+        }
+
+        Set<SubjectGroup> distinct = new HashSet<>();
+
+        for (int i = 0; i < lessonInstances.size(); i++) {
+            if (distinct.add(lessonInstances.get(i))) {
+                SubjectGroup group = lessonInstances.get(i);
+
+                for (Student student : group.getStudents()) {
+                    result.get(student.getId()).add(group);
+                }
+            }
+        }
+
+        return Collections.unmodifiableList(result);
     }
 
     private Map<RoomType, List<Room>> generateRooms() {
@@ -232,11 +298,13 @@ public class TestDataGenerator {
     }
 
     private boolean[] generateDefaultAvailability(Set<Subject> subjects) {
-        boolean[] arr = new boolean[DAYS];
+        boolean[] arr = new boolean[days];
 
         for (int i = 0; i < arr.length; i++) {
             arr[i] = random.nextBoolean();
         }
+
+        //Arrays.fill(arr, true);
 
         int count = 0;
         int missing = 0;
@@ -268,7 +336,7 @@ public class TestDataGenerator {
         }
 
         if (missing > freeIndexes.size()) {
-            throw new IllegalArgumentException("TEACHER AVAILABILITY GENERATOR FAIL: subject can't fit in " + DAYS + " days at this cap");
+            throw new IllegalArgumentException("TEACHER AVAILABILITY GENERATOR FAIL: subject can't fit in " + days + " days at this cap");
         }
 
         while (missing > 0) {
@@ -349,7 +417,7 @@ public class TestDataGenerator {
     }
 
     private Slot[] createSlots() {
-        Slot[] slots = new Slot[DAYS * lessonsPerDay];
+        Slot[] slots = new Slot[days * lessonsPerDay];
 
         for (int i = 0; i < slots.length; i++) {
             slots[i] = new Slot(i / lessonsPerDay, i % lessonsPerDay, i);

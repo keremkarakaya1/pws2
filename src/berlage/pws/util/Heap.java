@@ -42,9 +42,18 @@ public class Heap {
         heap[secondIndex] = temp;
     }
 
-    public void updatePriority(ScheduleState state) {
+    public void offer(ScheduleState state) {
         if (!indexMap.containsKey(state)) {
-            offer(state);
+            if (currentSize >= 3 * fullSize / 4) {
+                resize();
+            }
+
+            heap[currentSize] = state;
+            indexMap.put(state, currentSize);
+            siftUp(currentSize);
+
+            currentSize++;
+
         } else {
             int index = indexMap.get(state);
 
@@ -89,22 +98,6 @@ public class Heap {
         int costSecond = second.getTotalCost();
 
         return costFirst < costSecond;
-    }
-
-    public void offer(ScheduleState state) {
-        if (contains(state)) {
-            return;
-        }
-
-        if (currentSize >= 3 * fullSize / 4) {
-            resize();
-        }
-
-        heap[currentSize] = state;
-        indexMap.put(state, currentSize);
-        siftUp(currentSize);
-
-        currentSize++;
     }
 
     private void resize() {

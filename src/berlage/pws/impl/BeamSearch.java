@@ -3,32 +3,28 @@ package berlage.pws.impl;
 import berlage.pws.model.ScheduleState;
 import berlage.pws.model.SubjectGroup;
 import berlage.pws.util.Heap;
-import berlage.pws.util.Occupancy;
 import berlage.pws.util.TestData;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class BeamSearch implements Search{
     private final ScheduleState initialState;
     private final ChildGenerator childGenerator;
     private final List<SubjectGroup> lessonInstances;
-    private final Heap keptStates;
+    private final List<ScheduleState> keptStates;
     private final Heap heap;
-    private final Occupancy occupancy;
     private final int beamWidth;
 
-    public BeamSearch(List<SubjectGroup> lessonInstances, TestData data, int beamWidth) {
-        childGenerator = new ChildGenerator(lessonInstances, data);
+    public BeamSearch(TestData data, int beamWidth, boolean heuristic) {
+        childGenerator = new ChildGenerator(data, true, false, heuristic, false);
         initialState = new ScheduleState(null, null, 0, 0, 0, 0);
         heap = new Heap(false);
 
-        keptStates = new Heap(false);
-        keptStates.offer(initialState);
+        keptStates = new ArrayList<>();
+        keptStates.add(initialState);
 
-        this.occupancy = childGenerator.getOccupancy();
-        this.lessonInstances = lessonInstances;
+        this.lessonInstances = data.lessonInstances();
         this.beamWidth = beamWidth;
 
     }
@@ -38,32 +34,45 @@ public class BeamSearch implements Search{
         int index = initialState.getIndex();
 
         while (index < lessonInstances.size()) {
+            System.out.println("cannotPlaceCount: " + childGenerator.cannotPlaceCount);
             System.out.println(index);
 
-            while (!keptStates.isEmpty()) {
-                List<ScheduleState> childStates = childGenerator.generateChildren(keptStates.poll());
+            for (ScheduleState state : keptStates) {
+                List<ScheduleState> childStates = childGenerator.generateChildren(state);
 
                 for (ScheduleState scheduleState : childStates) {
                     heap.offer(scheduleState);
                 }
             }
 
+            keptStates.clear();
+
+            System.out.println("HEAPSIZE: " + heap.size());
+
             if (heap.isEmpty()) {
                 throw new RuntimeException("Beam Search fail -- Increase Width");
             }
 
-            for (int i = 0; i < Math.min(beamWidth, heap.size()); i++) {
-                keptStates.offer(heap.poll());
+            int count = Math.min(beamWidth, heap.size());
+
+            for (int i = 0; i < count; i++) {
+                keptStates.add(heap.poll());
             }
 
             heap.clear();
             index++;
         }
 
-        if (keptStates.isEmpty()) {
-            throw new RuntimeException("BEAM SEARCH FAIL -- NULL SCHEDULE, Increase Width");
+        int currentCost = Integer.MAX_VALUE;
+        ScheduleState result = null;
+
+        for (ScheduleState state : keptStates) {
+            if (state.getTotalCost() < currentCost) {
+                currentCost = state.getTotalCost();
+                result = state;
+            }
         }
 
-        return keptStates.poll();
+        return result;
     }
 }

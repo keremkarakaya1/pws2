@@ -13,13 +13,19 @@ public class OutputManager {
     private final int days;
     private final String outputPath;
 
+    public OutputManager(int lessonsPerDay, int days) {
+        this.lessonsPerDay = lessonsPerDay;
+        this.days = days;
+        this.outputPath = "";
+    }
+
     public OutputManager(int lessonsPerDay, int days, String outputPath) {
         this.lessonsPerDay = lessonsPerDay;
         this.days = days;
         this.outputPath = outputPath;
     }
 
-    private double getAverageGap(ScheduledLesson[][][] lessons) {
+    public static double getAverageGap(ScheduledLesson[][][] lessons) {
        int gapCount = 0;
 
         for (int i = 0; i < lessons.length; i++) {
@@ -48,7 +54,7 @@ public class OutputManager {
         return (double) gapCount / lessons.length;
     }
 
-    public void outputSchedule(ScheduleState state) {
+    public ScheduledLesson[][][] getSchedules(ScheduleState state) {
         ScheduleState movingPointer = state;
         Map<Student, List<ScheduledLesson>> lessonsPerStudent = new HashMap<>();
 
@@ -79,6 +85,11 @@ public class OutputManager {
             }
         }
 
+        return schedules;
+    }
+
+    public void outputSchedule(ScheduleState state) {
+        ScheduledLesson[][][] schedules = getSchedules(state);
         System.out.println("AVERAGE GAPS: " + getAverageGap(schedules));
 
         StringBuilder sb = new StringBuilder();
