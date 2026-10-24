@@ -28,39 +28,35 @@ public class Main {
         }
     }
 
-    private static void runAstarBasic(PathFinder aStar, OutputManager outputManagerAStar) {
+    private static void runAstarBasic(PathFinder aStar, OutputManager outputManagerAStar, List<TestResult> results) {
+        String name = "A* BASIC";
+
         long start = System.nanoTime();
         ScheduleState aStarGoal = aStar.find();
         long end = System.nanoTime();
 
-        System.out.println("A* BASIC");
-        System.out.println();
-
         double runAverageAstar = OutputManager.getAverageGap(outputManagerAStar.getSchedules(aStarGoal));
         outputManagerAStar.outputSchedule(aStarGoal);
-        System.out.println("AVERAGE: " + runAverageAstar);
-        System.out.println("cost: " + aStarGoal.getTotalCost());
-        System.out.println("RT in ms: " + (end - start) / 1000000);
-        System.out.println("RT in s: " + (end - start) / 1000000000);
+
+        results.add(new TestResult(name, runAverageAstar, aStarGoal.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
     }
 
-    private static void runBeam(BeamSearch beam, OutputManager outputManagerBeam) {
+    private static void runBeam(BeamSearch beam, OutputManager outputManagerBeam, List<TestResult> results) {
+        String name = "Beam search";
+
         long start = System.nanoTime();
         ScheduleState beamGoal = beam.find();
         long end = System.nanoTime();
 
-        System.out.println();
-        System.out.println("BEAM");
-
         double runAverage = OutputManager.getAverageGap(outputManagerBeam.getSchedules(beamGoal));
         outputManagerBeam.outputSchedule(beamGoal);
-        System.out.println("AVERAGE: " + runAverage);
-        System.out.println("cost: " + beamGoal.getTotalCost());
-        System.out.println("RT in ms: " + (end - start) / 1000000);
-        System.out.println("RT in s: " + (end - start) / 1000000000);
+
+        results.add(new TestResult(name, runAverage, beamGoal.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
     }
 
-    private static void runDijkstra(PathFinder dijkstra, OutputManager outputManagerDijkstra) {
+    private static void runDijkstra(PathFinder dijkstra, OutputManager outputManagerDijkstra, List<TestResult> results) {
+        String name = "Dijkstra";
+
         long start = System.nanoTime();
         ScheduleState dijkstraGoal = dijkstra.find();
         long end = System.nanoTime();
@@ -70,13 +66,13 @@ public class Main {
 
         double runAverage = OutputManager.getAverageGap(outputManagerDijkstra.getSchedules(dijkstraGoal));
         outputManagerDijkstra.outputSchedule(dijkstraGoal);
-        System.out.println("AVERAGE: " + runAverage);
-        System.out.println("cost: " + dijkstraGoal.getTotalCost());
-        System.out.println("RT in ms: " + (end - start) / 1000000);
-        System.out.println("RT in s: " + (end - start) / 1000000000);
+
+        results.add(new TestResult(name, runAverage, dijkstraGoal.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
     }
 
-    private static void runAstarAdvanced(PathFinder aStarAdvanced, OutputManager outputManagerAstarAdvanced) {
+    private static void runAstarAdvanced(PathFinder aStarAdvanced, OutputManager outputManagerAstarAdvanced, List<TestResult> results) {
+        String name = "A* Advanced";
+
         long start = System.nanoTime();
         ScheduleState goalStateAdvanced = aStarAdvanced.find();
         long end = System.nanoTime();
@@ -86,10 +82,8 @@ public class Main {
 
         double runAverageAdvanced = OutputManager.getAverageGap(outputManagerAstarAdvanced.getSchedules(goalStateAdvanced));
         outputManagerAstarAdvanced.outputSchedule(goalStateAdvanced);
-        System.out.println("AVERAGE: " + runAverageAdvanced);
-        System.out.println("cost: " + goalStateAdvanced.getTotalCost());
-        System.out.println("RT in ms: " + (end - start) / 1000000);
-        System.out.println("RT in s: " + (end - start) / 1000000000);
+
+        results.add(new TestResult(name, runAverageAdvanced, goalStateAdvanced.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
     }
 
     private static Set<Subject> combine(Set<Subject> common, Set<Subject> profile) {
@@ -286,12 +280,26 @@ public class Main {
         ScheduleState goalBB;
 
         //warmUp(testDataTiny);
+        List<TestResult> results = new ArrayList<>();
 
-        //runDijkstra(dijkstra, outputManagerDijkstra);
-        runAstarBasic(aStar, outputManagerAStar);
-        runAstarAdvanced(aStarAdvanced, outputManagerAstarAdvanced);
-        runBeam(beamSearchTiny, outputManagerBeam);
-        runBeam(beamSearchTinyWithH, outputManagerBeamWithH);
+        //runDijkstra(dijkstra, outputManagerDijkstra, results);
+        runAstarBasic(aStar, outputManagerAStar, results);
+        runAstarAdvanced(aStarAdvanced, outputManagerAstarAdvanced, results);
+        runBeam(beamSearchTiny, outputManagerBeam, results);
+        runBeam(beamSearchTinyWithH, outputManagerBeamWithH, results);
+
+        for (int i = 0; i < 3; i++) {
+            System.out.println();
+        }
+
+        for (TestResult result : results) {
+            System.out.println();
+            System.out.println(result.name());
+            System.out.println("Average gap count: " + result.averageGap());
+            System.out.println("Cost: " + result.cost());
+            System.out.println("runtimeMs: " + result.runtimeMilliseconds());
+            System.out.println("runtimeSeconds: " + result.runtimeSeconds());
+        }
 
         /*
         goalState = aStar.find();
@@ -360,6 +368,7 @@ public class Main {
             //branchBoundDFS = new BranchBoundDFS(testData, 500, 100000, true, true, false);
         }
 
+        /*
         int nonFailCount = testSize - countFailed;
 
         if (nonFailCount == 0) {
@@ -371,5 +380,6 @@ public class Main {
 
         System.out.println(maximum);
         System.out.println(minimum);
+         */
     }
 }
