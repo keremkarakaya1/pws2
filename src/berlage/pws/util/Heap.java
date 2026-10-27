@@ -11,9 +11,12 @@ public class Heap {
 
     private int fullSize = 10;
     private ScheduleState[] heap = new ScheduleState[fullSize];
-    private final HashMap<ScheduleState, Integer> indexMap = new HashMap<>();
-    private int currentSize = 0;
+    //private final HashMap<ScheduleState, Integer> indexMap = new HashMap<>();
     private final boolean depthBased;
+    private int currentSize = 0;
+
+    private int count = 0;
+    private int updateCount = 0;
 
     public Heap(boolean depthBased) {
         this.depthBased = depthBased;
@@ -33,8 +36,8 @@ public class Heap {
     }
 
     private void swap(int firstIndex, int secondIndex) {
-        indexMap.put(heap[firstIndex], secondIndex);
-        indexMap.put(heap[secondIndex], firstIndex);
+        //indexMap.put(heap[firstIndex], secondIndex);
+        //indexMap.put(heap[secondIndex], firstIndex);
 
         ScheduleState temp = heap[firstIndex];
 
@@ -43,6 +46,18 @@ public class Heap {
     }
 
     public void offer(ScheduleState state) {
+        if (currentSize >= 3 * fullSize / 4) {
+            resize();
+        }
+
+        heap[currentSize] = state;
+        siftUp(currentSize);
+
+        currentSize++;
+
+
+
+        /*
         if (!indexMap.containsKey(state)) {
             if (currentSize >= 3 * fullSize / 4) {
                 resize();
@@ -55,6 +70,12 @@ public class Heap {
             currentSize++;
 
         } else {
+            count++;
+
+            if (count % 10000 == 0) {
+                System.out.println("Heap Update Count: " + updateCount);
+            }
+
             int index = indexMap.get(state);
 
             if (heap[index].getTotalCost() > state.getTotalCost()) {
@@ -62,12 +83,14 @@ public class Heap {
                 heap[index] = state;
 
                 siftUp(index);
+                updateCount++;
             }
         }
+         */
     }
 
     public void clear() {
-        indexMap.clear();
+        //indexMap.clear();
         Arrays.fill(heap, 0, currentSize, null);
         currentSize = 0;
     }
@@ -112,9 +135,9 @@ public class Heap {
 
         ScheduleState bestState = heap[0];
         heap[0] = heap[currentSize - 1];
-        indexMap.put(heap[0], 0);
+        //indexMap.put(heap[0], 0);
 
-        indexMap.remove(bestState);
+        //indexMap.remove(bestState);
         heap[currentSize - 1] = null;
         currentSize--;
 
@@ -125,9 +148,11 @@ public class Heap {
         return bestState;
     }
 
+    /*
     public boolean contains(ScheduleState state) {
         return indexMap.containsKey(state);
     }
+     */
 
     private void siftUp(int index) {
         while (index > 0 && isHigherPriority(heap[index], heap[getParent(index)])) {

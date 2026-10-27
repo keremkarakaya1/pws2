@@ -16,8 +16,8 @@ public class BeamSearch implements Search{
     private final Heap heap;
     private final int beamWidth;
 
-    public BeamSearch(TestData data, int beamWidth, boolean heuristic) {
-        childGenerator = new ChildGenerator(data, true, false, heuristic, false);
+    public BeamSearch(TestData data, int beamWidth, boolean heuristic, boolean advanced) {
+        childGenerator = new ChildGenerator(data, true, true, heuristic, advanced);
         initialState = new ScheduleState(null, null, 0, 0, 0, 0);
         heap = new Heap(false);
 
@@ -36,6 +36,7 @@ public class BeamSearch implements Search{
         while (index < lessonInstances.size()) {
             System.out.println("cannotPlaceCount: " + childGenerator.cannotPlaceCount);
             System.out.println(index);
+            childGenerator.clearSet();
 
             for (ScheduleState state : keptStates) {
                 List<ScheduleState> childStates = childGenerator.generateChildren(state);

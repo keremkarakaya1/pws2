@@ -10,7 +10,7 @@ public class Main {
 
     private static void warmUp(TestData data) {
         boolean[][] settings = {
-                {false, false},   // heuristic, advanced
+                //{false, false},   // heuristic, advanced
                 {true, false},
                 {true, true}
         };
@@ -22,6 +22,8 @@ public class Main {
                 new PathFinder(data, s[0], false, s[1]).find();
             }
         }
+
+        System.out.println("warmup complete");
 
         for (int i = 0; i < 5; i++) {
             System.out.println();
@@ -55,14 +57,12 @@ public class Main {
     }
 
     private static void runDijkstra(PathFinder dijkstra, OutputManager outputManagerDijkstra, List<TestResult> results) {
-        String name = "Dijkstra";
+        String name = "DIJKSTRA";
 
         long start = System.nanoTime();
         ScheduleState dijkstraGoal = dijkstra.find();
         long end = System.nanoTime();
 
-        System.out.println();
-        System.out.println("DIJKSTRA");
 
         double runAverage = OutputManager.getAverageGap(outputManagerDijkstra.getSchedules(dijkstraGoal));
         outputManagerDijkstra.outputSchedule(dijkstraGoal);
@@ -71,20 +71,31 @@ public class Main {
     }
 
     private static void runAstarAdvanced(PathFinder aStarAdvanced, OutputManager outputManagerAstarAdvanced, List<TestResult> results) {
-        String name = "A* Advanced";
+        String name = "A* ADVANCED";
 
         long start = System.nanoTime();
         ScheduleState goalStateAdvanced = aStarAdvanced.find();
         long end = System.nanoTime();
-
-        System.out.println();
-        System.out.println("A* ADVANCED");
 
         double runAverageAdvanced = OutputManager.getAverageGap(outputManagerAstarAdvanced.getSchedules(goalStateAdvanced));
         outputManagerAstarAdvanced.outputSchedule(goalStateAdvanced);
 
         results.add(new TestResult(name, runAverageAdvanced, goalStateAdvanced.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
     }
+
+    private static void runBasicBranchAndBoundWHeuristic(BranchBoundDFS branchBoundDFS, OutputManager outputManagerBB, List<TestResult> results) {
+        String name = "Branch and Bound with heuristic";
+
+        long start = System.nanoTime();
+        ScheduleState goalStateBB = branchBoundDFS.find();
+        long end = System.nanoTime();
+
+        double runAverageAdvanced = OutputManager.getAverageGap(outputManagerBB.getSchedules(goalStateBB));
+        outputManagerBB.outputSchedule(goalStateBB);
+
+        results.add(new TestResult(name, runAverageAdvanced, goalStateBB.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
+    }
+
 
     private static Set<Subject> combine(Set<Subject> common, Set<Subject> profile) {
         Set<Subject> result = new HashSet<>(common);
@@ -216,13 +227,13 @@ public class Main {
                 profiles,
                 electives,
                 seed,
-                20,
+                15,
                 1,
                 6,
                 1,
                 1,
                 teacherCountPerSubject * 2,
-                20,
+                40,
                 lessonsPerDayTiny,
                 maxCountSubjectPerDay,
                 daysTiny
@@ -257,21 +268,25 @@ public class Main {
         TestDataValidator.validate(testData);
         TestDataValidator.validate(testDataTiny);
 
-        OutputManager outputManagerBB = new OutputManager(lessonsPerDayFull, daysFull, "outputBB.html");
-        OutputManager outputManagerDijkstra = new OutputManager(lessonsPerDayTiny, daysTiny, "outputDijkstra.html");
-        OutputManager outputManagerDFS = new OutputManager(lessonsPerDayFull, daysFull, "outputDFS.html");
-        OutputManager outputManagerBeam = new OutputManager(lessonsPerDayTiny, daysTiny, "outputBEAM.html");
-        OutputManager outputManagerBeamWithH = new OutputManager(lessonsPerDayTiny, daysTiny, "outputBEAMwH.html");
-        OutputManager outputManagerAStar = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstar.html");
-        OutputManager outputManagerAstarAdvanced = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstarAdvanced.html");
-        PathFinder aStarAdvanced = new PathFinder(testDataTiny, true, false, true);
-        PathFinder aStar = new PathFinder(testDataTiny, true, false, false);
-        PathFinder dfs = new PathFinder(testData, false, true, false);
-        PathFinder dijkstra = new PathFinder(testDataTiny, false, false, false);
-        BeamSearch beamSearch = new BeamSearch(testData, 100000, false);
-        BeamSearch beamSearchTiny = new BeamSearch(testDataTiny, 100000, false);
-        BeamSearch beamSearchTinyWithH = new BeamSearch(testDataTiny, 100000, true);
-        BranchBoundDFS branchBoundDFS = new BranchBoundDFS(testData, 900, 100000, true, true, false);
+        //OutputManager outputManagerBB = new OutputManager(lessonsPerDayFull, daysFull, "outputBB.html");
+        //OutputManager outputManagerDijkstra = new OutputManager(lessonsPerDayTiny, daysTiny, "outputDijkstra.html");
+        //OutputManager outputManagerDFS = new OutputManager(lessonsPerDayFull, daysFull, "outputDFS.html");
+        //OutputManager outputManagerBeam = new OutputManager(lessonsPerDayFull, daysFull, "outputBEAM.html");
+        //OutputManager outputManagerBeamWithH = new OutputManager(lessonsPerDayTiny, daysTiny, "outputBEAMwH.html");
+        //OutputManager outputManagerAstarAdvanced = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstarAdvanced.html");
+        //PathFinder aStarAdvanced = new PathFinder(testDataTiny, true, false, true);
+
+        //PathFinder dfs = new PathFinder(testData, false, true, false);
+        //PathFinder dijkstra = new PathFinder(testDataTiny, false, false, false);
+        //BeamSearch beamSearch = new BeamSearch(testData, 100000, true, false);
+        //BeamSearch beamSearchNoH = new BeamSearch(testData, 100000, false, false);
+        //BeamSearch beamSearchFullH = new BeamSearch(testData, 100000, true, true);
+        //BeamSearch beamSearchTiny = new BeamSearch(testDataTiny, 100000, false, false);
+        //BeamSearch beamSearchTinyWithH = new BeamSearch(testDataTiny, 100000, true, true);
+        //beamSearch no heuristic is better
+        //BranchBoundDFS branchBoundDFSAdvanced = new BranchBoundDFS(testDataTiny, 120, 100000, true, false, true);
+        //BranchBoundDFS branchBoundDFSBasic = new BranchBoundDFS(testDataTiny, 120, 100000, true, false, false);
+
         ScheduleState dijkstraGoal;
         ScheduleState aStarGoal;
         ScheduleState goalStateAdvanced;
@@ -282,11 +297,22 @@ public class Main {
         //warmUp(testDataTiny);
         List<TestResult> results = new ArrayList<>();
 
+        //warmUp(testDataTiny);
         //runDijkstra(dijkstra, outputManagerDijkstra, results);
+        //runBasicBranchAndBoundWHeuristic(branchBoundDFSAdvanced, outputManagerBB, results);
+        //runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic, outputManagerBB, results);
+
+
+        PathFinder aStar = new PathFinder(testDataTiny, true, false, false);
+        OutputManager outputManagerAStar = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstar.html");
         runAstarBasic(aStar, outputManagerAStar, results);
-        runAstarAdvanced(aStarAdvanced, outputManagerAstarAdvanced, results);
-        runBeam(beamSearchTiny, outputManagerBeam, results);
-        runBeam(beamSearchTinyWithH, outputManagerBeamWithH, results);
+
+        //runAstarAdvanced(aStarAdvanced, outputManagerAstarAdvanced, results);
+        //runBeam(beamSearchTiny, outputManagerBeam, results);
+        //runBeam(beamSearchTinyWithH, outputManagerBeamWithH, results);
+        //runBeam(beamSearch, outputManagerBeam, results);
+        //runBeam(beamSearchNoH, outputManagerBeam, results);
+        //runBeam(beamSearchFullH, outputManagerBeam, results);
 
         for (int i = 0; i < 3; i++) {
             System.out.println();

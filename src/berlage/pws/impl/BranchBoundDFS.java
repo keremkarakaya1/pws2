@@ -7,14 +7,12 @@ import berlage.pws.util.Heap;
 import berlage.pws.util.OutputManager;
 import berlage.pws.util.TestData;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class BranchBoundDFS implements Search{
     private final Heap heap;
     private final ChildGenerator childGenerator;
-    private final Map<Long, Integer> bestKnownCostMap;
+    //private final Set<Long> closedSet;
     private final ScheduleState initialState;
     private final List<SubjectGroup> lessonInstances;
     private final OutputManager outputManager;
@@ -34,7 +32,7 @@ public class BranchBoundDFS implements Search{
         outputManager = new OutputManager(data.lessonsPerDay(), data.days());
         childGenerator = new ChildGenerator(data, true, true, heuristic, advanced);
         initialState = new ScheduleState(null, null, 0,0,0,0);
-        bestKnownCostMap = new HashMap<>();
+        //closedSet = new HashSet<>();
 
         this.beamWidth = beamWidth;
         this.data = data;
@@ -47,14 +45,15 @@ public class BranchBoundDFS implements Search{
 
     @Override
     public ScheduleState find() {
-        bestKnownCostMap.clear();
+        //closedSet.clear();
         heap.clear();
+        childGenerator.clearSet();
 
         int bestCost = Integer.MAX_VALUE;
         ScheduleState beamBaseline = initialState;
 
         if (beamStart) {
-            BeamSearch beamSearch = new BeamSearch(data, beamWidth, false);
+            BeamSearch beamSearch = new BeamSearch(data, beamWidth, false, false);
             beamBaseline = beamSearch.find();
             bestCost = Math.min(bestCost, CostManager.convertBeamCost(outputManager.getSchedules(beamBaseline)));
             System.out.println("BEST COST: " + bestCost);
@@ -62,6 +61,8 @@ public class BranchBoundDFS implements Search{
 
         long start = System.nanoTime();
         //int iterationCount = 0;
+        int countDupe = 0;
+        int theoreticalBest = CostManager.getTheoreticalBest(lessonInstances);
 
         ScheduleState best = beamStart ? beamBaseline : initialState;
 
@@ -98,17 +99,19 @@ public class BranchBoundDFS implements Search{
                 continue;
             }
 
+            if (bestCost == theoreticalBest) {
+                return best;
+            }
+
             if (state.getTotalCost() >= bestCost) {
                 continue;
             }
 
-            if (bestKnownCostMap.getOrDefault(state.getHash(), Integer.MAX_VALUE) > state.getTotalCost()) {
-                bestKnownCostMap.put(state.getHash(), state.getTotalCost());
-            } else {
+            /*
+            if (!closedSet.add(state.getHash())) {
                 continue;
             }
-
-
+             */
 
             List<ScheduleState> children = childGenerator.generateChildren(state);
 

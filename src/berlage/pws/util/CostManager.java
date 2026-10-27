@@ -11,6 +11,10 @@ public final class CostManager {
 
     private CostManager() {}
 
+    public static int getTheoreticalBest(List<SubjectGroup> lessonsInstances) {
+        return GAP_WEIGHT * lessonsInstances.size();
+    }
+
     public static int calculateAdvancedHCost(Occupancy occupancy,
                                              ScheduledLesson lesson,
                                              List<Student> students,
@@ -141,6 +145,7 @@ public final class CostManager {
 
             if (lessonCount == 0) {
                 if (!gapOnly) {
+                    //nothing uses this branch atm
                     cost += slot.getPeriod() + GAP_WEIGHT;
                 } else {
                     cost += GAP_WEIGHT;

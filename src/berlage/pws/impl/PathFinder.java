@@ -8,14 +8,14 @@ import java.util.*;
 
 public class PathFinder implements Search {
     private final Heap openHeap;
-    private final Set<Long> closedSet;
+    //private final Set<Long> closedSet;
     private final ChildGenerator childGenerator;
     private final List<SubjectGroup> lessonInstances;
     private final ScheduleState initialState;
 
     public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced) {
         openHeap = new Heap(depthBased);
-        closedSet = new HashSet<>();
+        //closedSet = new HashSet<>();
         childGenerator = new ChildGenerator(data, true, true, heuristic, advanced);
 
         initialState = new ScheduleState(null, null, 0,0,0,0);
@@ -24,6 +24,7 @@ public class PathFinder implements Search {
 
     @Override
     public ScheduleState find() {
+        childGenerator.clearSet();
         openHeap.offer(initialState);
         int pollCount = 0;
         int maxDepth = 0;
@@ -34,18 +35,27 @@ public class PathFinder implements Search {
         while (!openHeap.isEmpty()) {
             ScheduleState state = openHeap.poll();
 
+            /*
             if (closedSet.contains(state.getHash())) {
                 continue;
             }
 
+
             closedSet.add(state.getHash());
+             */
             pollCount++;
+
+            if (pollCount % 1000000 == 0) {
+                System.out.println(pollCount);
+                System.out.println(openHeap.size());
+                //System.out.println(closedSet.size());
+            }
 
             if (state.getIndex() == lessonInstances.size()) {
                 System.out.println("pollCount: " + pollCount);
                 System.out.println("maxDepth: " + maxDepth);
                 System.out.println("maxHeapSize: " + maxHeapSize);
-                System.out.println("closedSet: " + closedSet.size());
+                //System.out.println("closedSet: " + closedSet.size());
                 System.out.println("HEAP size: " + openHeap.size());
                 System.out.println(lessonInstances.size());
 
@@ -62,9 +72,10 @@ public class PathFinder implements Search {
 
                 //System.out.println(state.getPlacedLesson().getGroup());
                 //System.out.println(state.getPlacedLesson().getRoom().getType());
+                System.out.println("cost: " + state.getTotalCost());
                 System.out.println("cannotPlaceCount: " + childGenerator.cannotPlaceCount);
                 System.out.println("HEAP size: " + openHeap.size());
-                System.out.println("closedSet: " + closedSet.size());
+                //System.out.println("closedSet: " + closedSet.size());
             }
 
             maxHeapSize = Math.max(maxHeapSize, openHeap.size());
