@@ -29,6 +29,11 @@ public class ChildGenerator {
     int cannotPlaceCount = 0;
     int counter = 0;
 
+    final int[] deadEndsPerDepth;
+    final int[] dupeEmptiedPerDepth;
+    long totalChildren = 0;
+    long newChildren = 0;
+
     public ChildGenerator(TestData data, boolean gapPenalty, boolean gapOnly, boolean heuristic, boolean advanced) {
         days = data.days();
         this.lessonInstances = data.lessonInstances();
@@ -37,6 +42,9 @@ public class ChildGenerator {
         this.heuristic = heuristic;
         this.advanced = advanced;
         lessonsLeft = data.lessonsLeft();
+
+        deadEndsPerDepth = new int[lessonInstances.size() + 1];
+        dupeEmptiedPerDepth = new int[lessonInstances.size() + 1];
 
         occupancy = new Occupancy(
                 data.teacherCount(),
@@ -68,6 +76,7 @@ public class ChildGenerator {
         occupancy.buildFullState(state);
         fillPerStudentGapCount();
         int index = state.getIndex();
+        boolean legalFound = false;
 
         for (Slot slot : slots) {
             //List<Room> matchingRooms = roomMap.get(group.getTeacher().getTypeRequirement());
@@ -85,9 +94,13 @@ public class ChildGenerator {
                 continue;
             }
 
+            legalFound = true;
+
             ScheduledLesson scheduledLesson = new ScheduledLesson(group, slot, room);
             long delta = zobristHashing.hashFor(scheduledLesson);
             long newHash = state.getHash() ^ delta;
+
+            totalChildren++;
 
             if (!closedSet.add(newHash)) {
                 counter++;
@@ -98,6 +111,8 @@ public class ChildGenerator {
 
                 continue;
             }
+
+            newChildren++;
 
             int hCost = 0;
             int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson, gapPenalty, gapOnly);
@@ -135,6 +150,15 @@ public class ChildGenerator {
             stateList.add(childState);
         }
 
+
+        if (stateList.isEmpty()) {
+            if (legalFound) {
+                dupeEmptiedPerDepth[index]++;
+            } else {
+                deadEndsPerDepth[index]++;
+            }
+        }
+
         return stateList;
     }
 
@@ -157,6 +181,13 @@ public class ChildGenerator {
 
             perStudentGapCount[student.getId()] = gapCount;
         }
+    }
+
+    public void resetStats() {
+        Arrays.fill(deadEndsPerDepth, 0);
+        Arrays.fill(dupeEmptiedPerDepth, 0);
+        totalChildren = 0;
+        newChildren = 0;
     }
 
     public Occupancy getOccupancy() {

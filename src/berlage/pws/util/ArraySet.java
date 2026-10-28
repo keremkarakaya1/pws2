@@ -9,6 +9,7 @@ public class ArraySet {
     private long[] arraySet;
     private int currentSize = 0;
     private boolean containsZero = false;
+    int dupeCount = 0;
 
     public ArraySet(int power) {
         if (power < 0 || power > 30) {
@@ -30,12 +31,21 @@ public class ArraySet {
             return true;
         }
 
+        if (currentSize % 1000000 == 0) {
+            System.out.println("ARRAYSET SIZE: " + currentSize);
+        }
 
 
         int index = getStartingIndex(value, arraySet.length);
 
         while (arraySet[index] != 0) {
             if (arraySet[index] == value) {
+                dupeCount++;
+
+                if (dupeCount % 1000000 == 0) {
+                    System.out.println("Dupe count: " + dupeCount);
+                }
+
                 return false;
             }
 

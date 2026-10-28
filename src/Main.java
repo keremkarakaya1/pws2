@@ -109,7 +109,7 @@ public class Main {
         final int countRegular = 12;
         final int countLab = 2;
         final int countGym = 2;
-        final int countStudents = 100;
+        final int countStudents = 250;
         final int lessonsPerDayFull = 9;
         final int lessonsPerDayTiny = 6;
         final int maxCountSubjectPerDay = 2;
@@ -257,7 +257,7 @@ public class Main {
                 daysFull);
 
         TestData testData = testDataGenerator.build();
-        //System.out.println(groups.size());
+        System.out.println(testData.lessonInstances().size());
 
         TestData testDataTiny = testDataGeneratorTiny.build();
         System.out.println(testDataTiny.lessonInstances().size());
@@ -271,7 +271,6 @@ public class Main {
         //OutputManager outputManagerBB = new OutputManager(lessonsPerDayFull, daysFull, "outputBB.html");
         //OutputManager outputManagerDijkstra = new OutputManager(lessonsPerDayTiny, daysTiny, "outputDijkstra.html");
         //OutputManager outputManagerDFS = new OutputManager(lessonsPerDayFull, daysFull, "outputDFS.html");
-        //OutputManager outputManagerBeam = new OutputManager(lessonsPerDayFull, daysFull, "outputBEAM.html");
         //OutputManager outputManagerBeamWithH = new OutputManager(lessonsPerDayTiny, daysTiny, "outputBEAMwH.html");
         //OutputManager outputManagerAstarAdvanced = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstarAdvanced.html");
         //PathFinder aStarAdvanced = new PathFinder(testDataTiny, true, false, true);
@@ -281,7 +280,7 @@ public class Main {
         //BeamSearch beamSearch = new BeamSearch(testData, 100000, true, false);
         //BeamSearch beamSearchNoH = new BeamSearch(testData, 100000, false, false);
         //BeamSearch beamSearchFullH = new BeamSearch(testData, 100000, true, true);
-        //BeamSearch beamSearchTiny = new BeamSearch(testDataTiny, 100000, false, false);
+
         //BeamSearch beamSearchTinyWithH = new BeamSearch(testDataTiny, 100000, true, true);
         //beamSearch no heuristic is better
         //BranchBoundDFS branchBoundDFSAdvanced = new BranchBoundDFS(testDataTiny, 120, 100000, true, false, true);
@@ -311,7 +310,11 @@ public class Main {
         //runBeam(beamSearchTiny, outputManagerBeam, results);
         //runBeam(beamSearchTinyWithH, outputManagerBeamWithH, results);
         //runBeam(beamSearch, outputManagerBeam, results);
-        //runBeam(beamSearchNoH, outputManagerBeam, results);
+
+        //OutputManager outputManagerBeam = new OutputManager(lessonsPerDayFull, daysFull, "outputBEAM.html");
+        //BeamSearch beamSearchTiny = new BeamSearch(testDataTiny, 100000, false, false);
+        //BeamSearch beamSearchFull = new BeamSearch(testData, 2500000, false, false);
+        //runBeam(beamSearchFull, outputManagerBeam, results);
         //runBeam(beamSearchFullH, outputManagerBeam, results);
 
         for (int i = 0; i < 3; i++) {
