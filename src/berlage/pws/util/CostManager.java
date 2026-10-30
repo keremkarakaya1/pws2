@@ -102,7 +102,8 @@ public final class CostManager {
                                      List<Student> students,
                                      int[][] remainingLessonTable,
                                      int[] studentGapCount,
-                                     int index) {
+                                     int index,
+                                     int weight) {
 
 
         SubjectGroup group = lesson.getGroup();
@@ -125,7 +126,7 @@ public final class CostManager {
             cost += countLessonsForcedToExtendDay * GAP_WEIGHT;
         }
 
-        return cost;
+        return cost * weight;
     }
 
     public static int calculateGCost(Occupancy occupancy,

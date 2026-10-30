@@ -8,6 +8,8 @@ import java.util.*;
 
 public class Main {
 
+    //TODO testing -> new method in childgen new vars pathfinder ->
+
     private static void warmUp(TestData data) {
         boolean[][] settings = {
                 //{false, false},   // heuristic, advanced
@@ -109,7 +111,7 @@ public class Main {
         final int countRegular = 12;
         final int countLab = 2;
         final int countGym = 2;
-        final int countStudents = 250;
+        final int countStudents = 150;
         final int lessonsPerDayFull = 9;
         final int lessonsPerDayTiny = 6;
         final int maxCountSubjectPerDay = 2;
@@ -222,18 +224,18 @@ public class Main {
                 requiredPerWeekTiny,
                 Map.of(CM,1,
                         EM,1,
-                        NG,0,
-                        NT,0),
+                        NG,1,
+                        NT,1),
                 profiles,
                 electives,
                 seed,
-                15,
+                20,
                 1,
                 6,
                 1,
                 1,
                 teacherCountPerSubject * 2,
-                40,
+                80,
                 lessonsPerDayTiny,
                 maxCountSubjectPerDay,
                 daysTiny
@@ -302,9 +304,16 @@ public class Main {
         //runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic, outputManagerBB, results);
 
 
+        /*
+        PathFinder aStarWeighted = new PathFinder(testDataTiny, true, false, false, 2);
         PathFinder aStar = new PathFinder(testDataTiny, true, false, false);
         OutputManager outputManagerAStar = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstar.html");
-        runAstarBasic(aStar, outputManagerAStar, results);
+        runAstarBasic(aStarWeighted, outputManagerAStar, results);
+         */
+
+        PathFinder aStarWeightedFull = new PathFinder(testData, true, false, false, 2);
+        OutputManager outputManagerAStarWeightedFull = new OutputManager(lessonsPerDayFull, daysFull, "outputAstarWEIGHTED_FULL.html");
+        runAstarBasic(aStarWeightedFull, outputManagerAStarWeightedFull, results);
 
         //runAstarAdvanced(aStarAdvanced, outputManagerAstarAdvanced, results);
         //runBeam(beamSearchTiny, outputManagerBeam, results);
@@ -329,86 +338,5 @@ public class Main {
             System.out.println("runtimeMs: " + result.runtimeMilliseconds());
             System.out.println("runtimeSeconds: " + result.runtimeSeconds());
         }
-
-        /*
-        goalState = aStar.find();
-        outputManagerAStar.outputSchedule(goalState);
-        System.out.println(OutputManager.getAverageGap(outputManagerAStar.getSchedules(goalState)));
-         */
-
-//        goalBeam = beamSearch.find();
-//        System.out.println(OutputManager.getAverageGap(outputManagerBeam.getSchedules(goalBeam)));
-
-        //goalBeam = beamSearchTiny.find();
-        //new OutputManager(lessonsPerDayFull, days, "beamTiny.html").outputSchedule(goalBeam);
-
-        //goalState = branchBoundDFS.find();
-        //System.out.println(OutputManager.getAverageGap(outputManagerBB.getSchedules(goalState)));
-
-
-
-        double maximum = 0.0;
-        double minimum = Integer.MAX_VALUE;
-        double average = 0;
-        int countFailed = 0;
-        int testSize = 1;
-
-
-
-
-        for (int i = 0; i < testSize; i++) {
-            //try {
-               /*
-            System.out.println();
-            System.out.println("DFS");
-
-                runAverage = OutputManager.getAverageGap(outputManagerDFS.getSchedules(goalDFS));
-                outputManagerDFS.outputSchedule(goalDFS);
-                System.out.println("AVERAGE: " + runAverage);
-                System.out.println("cost: " + goalDFS.getTotalCost());
-
-            System.out.println();
-            System.out.println("BEAM");
-
-                runAverage = OutputManager.getAverageGap(outputManagerBeam.getSchedules(goalBeam));
-                outputManagerBeam.outputSchedule(goalBeam);
-                System.out.println("AVERAGE: " + runAverage);
-                System.out.println("cost: " + goalBeam.getTotalCost());
-
-            System.out.println();
-            System.out.println("DFS BB");
-
-                runAverage = OutputManager.getAverageGap(outputManagerBB.getSchedules(goalBB));
-                outputManagerBB.outputSchedule(goalBB);
-                System.out.println("AVERAGE: " + runAverage);
-                System.out.println("cost: " + goalBB.getTotalCost());
-             */
-
-
-                //average += runAverage;
-
-                //maximum = Math.max(maximum, runAverage);
-                //minimum = Math.min(minimum, runAverage);
-            //} catch (RuntimeException exc) {
-                //countFailed++;
-            //}
-
-            //testData = testDataGenerator.build();
-            //branchBoundDFS = new BranchBoundDFS(testData, 500, 100000, true, true, false);
-        }
-
-        /*
-        int nonFailCount = testSize - countFailed;
-
-        if (nonFailCount == 0) {
-            System.out.println(countFailed);
-        } else {
-            System.out.println(average / nonFailCount);
-            System.out.println(countFailed);
-        }
-
-        System.out.println(maximum);
-        System.out.println(minimum);
-         */
     }
 }

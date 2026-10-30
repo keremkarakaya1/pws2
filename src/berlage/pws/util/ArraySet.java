@@ -42,7 +42,7 @@ public class ArraySet {
             if (arraySet[index] == value) {
                 dupeCount++;
 
-                if (dupeCount % 1000000 == 0) {
+                if (dupeCount % 100000 == 0) {
                     System.out.println("Dupe count: " + dupeCount);
                 }
 

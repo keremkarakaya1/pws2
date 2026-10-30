@@ -30,7 +30,7 @@ public class BranchBoundDFS implements Search{
 
         heap = new Heap(true);
         outputManager = new OutputManager(data.lessonsPerDay(), data.days());
-        childGenerator = new ChildGenerator(data, true, true, heuristic, advanced);
+        childGenerator = new ChildGenerator(data, true, true, heuristic, advanced, 1);
         initialState = new ScheduleState(null, null, 0,0,0,0);
         //closedSet = new HashSet<>();
 

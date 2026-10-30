@@ -26,6 +26,7 @@ public class ChildGenerator {
     private final boolean heuristic;
     private final boolean advanced;
     private final int initialPower = 28;
+    private final int weight;
     int cannotPlaceCount = 0;
     int counter = 0;
 
@@ -34,13 +35,14 @@ public class ChildGenerator {
     long totalChildren = 0;
     long newChildren = 0;
 
-    public ChildGenerator(TestData data, boolean gapPenalty, boolean gapOnly, boolean heuristic, boolean advanced) {
+    public ChildGenerator(TestData data, boolean gapPenalty, boolean gapOnly, boolean heuristic, boolean advanced, int weight) {
         days = data.days();
         this.lessonInstances = data.lessonInstances();
         this.gapPenalty = gapPenalty;
         this.gapOnly = gapOnly;
         this.heuristic = heuristic;
         this.advanced = advanced;
+        this.weight = weight;
         lessonsLeft = data.lessonsLeft();
 
         deadEndsPerDepth = new int[lessonInstances.size() + 1];
@@ -105,7 +107,7 @@ public class ChildGenerator {
             if (!closedSet.add(newHash)) {
                 counter++;
 
-                if (counter % 1000 == 0) {
+                if (counter % 100000 == 0) {
                     System.out.println("Dupecount: " + counter);
                 }
 
@@ -134,7 +136,8 @@ public class ChildGenerator {
                                                     studentList,
                                                     lessonsLeft,
                                                     perStudentGapCount,
-                                                    index + 1);
+                                                    index + 1,
+                                                    weight);
                 }
             }
 
