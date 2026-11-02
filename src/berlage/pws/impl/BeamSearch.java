@@ -36,7 +36,6 @@ public class BeamSearch implements Search{
         while (index < lessonInstances.size()) {
             System.out.println("cannotPlaceCount: " + childGenerator.cannotPlaceCount);
             System.out.println(index);
-            childGenerator.clearSet();
 
             for (ScheduleState state : keptStates) {
                 List<ScheduleState> childStates = childGenerator.generateChildren(state);

@@ -1,7 +1,6 @@
 package berlage.pws.impl;
 
 import berlage.pws.model.*;
-import berlage.pws.util.ArraySet;
 import berlage.pws.util.CostManager;
 import berlage.pws.util.Occupancy;
 import berlage.pws.util.TestData;
@@ -18,17 +17,14 @@ public class ChildGenerator {
     private final List<List<SubjectGroup>> subjectGroupsPerStudent;
     private final Map<RoomType, List<Room>> roomMap;
     private final List<Student> studentList;
-    private final ArraySet closedSet;
     private final int[] perStudentGapCount;
     private final int days;
     private final boolean gapPenalty;
     private final boolean gapOnly;
     private final boolean heuristic;
     private final boolean advanced;
-    private final int initialPower = 28;
     private final int weight;
     int cannotPlaceCount = 0;
-    int counter = 0;
 
     public ChildGenerator(TestData data, boolean gapPenalty, boolean gapOnly, boolean heuristic, boolean advanced, int weight) {
         days = data.days();
@@ -54,7 +50,6 @@ public class ChildGenerator {
         subjectGroupsPerStudent = data.subjectGroupsPerStudent();
         countGroupsToBeScheduled = data.countGroupsToBeScheduledAtIndex();
         studentList = new ArrayList<>(data.students());
-        closedSet = new ArraySet(initialPower);
         perStudentGapCount = new int[studentList.size()];
 
         roomMap = data.roomMap();
@@ -102,18 +97,6 @@ public class ChildGenerator {
 
             ScheduledLesson scheduledLesson = new ScheduledLesson(group, slot, room);
             long delta = zobristHashing.hashFor(scheduledLesson);
-            long newHash = state.getHash() ^ delta;
-
-
-            if (!closedSet.add(newHash)) {
-                counter++;
-
-                if (counter % 10 == 0) {
-                    System.out.println("Dupecount: " + counter);
-                }
-
-                continue;
-            }
 
             int hCost = 0;
             int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson, gapPenalty, gapOnly);
@@ -187,10 +170,6 @@ public class ChildGenerator {
 
     public List<SubjectGroup> getLessonInstances() {
         return lessonInstances;
-    }
-
-    public void clearSet() {
-        closedSet.clear();
     }
 
     private Room getFreeRoom(RoomType type, Slot slot) {

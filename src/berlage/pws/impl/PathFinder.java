@@ -25,7 +25,6 @@ public class PathFinder implements Search {
 
     @Override
     public ScheduleState find() {
-        childGenerator.clearSet();
         openHeap.offer(initialState);
         int pollCount = 0;
         int maxDepth = 0;

@@ -45,9 +45,7 @@ public class BranchBoundDFS implements Search{
 
     @Override
     public ScheduleState find() {
-        //closedSet.clear();
         heap.clear();
-        childGenerator.clearSet();
 
         int bestCost = Integer.MAX_VALUE;
         ScheduleState beamBaseline = initialState;
@@ -61,7 +59,6 @@ public class BranchBoundDFS implements Search{
 
         long start = System.nanoTime();
         //int iterationCount = 0;
-        int countDupe = 0;
         int theoreticalBest = CostManager.getTheoreticalBest(lessonInstances);
 
         ScheduleState best = beamStart ? beamBaseline : initialState;
