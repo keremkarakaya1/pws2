@@ -9,17 +9,19 @@ public class ZobristHashing {
     private final long[][] teacherSlot;
     private final long[][] roomSlot;
     private final long[][] studentSlot;
+    private final long[][] subjectGroupSlot;
     private final int lessonsPerDay;
     private final int slotCount;
 
     //TODO add per subjectgroup keying
 
-    public ZobristHashing(int lessonsPerDay, int countDays, int countTeachers, int countRooms, int countStudents, long seed) {
+    public ZobristHashing(int lessonsPerDay, int countDays, int countTeachers, int countRooms, int countStudents, int countGroups, long seed) {
         slotCount = lessonsPerDay * countDays;
         this.lessonsPerDay = lessonsPerDay;
         teacherSlot = new long[countTeachers][slotCount];
         roomSlot = new long[countRooms][slotCount];
         studentSlot = new long[countStudents][slotCount];
+        subjectGroupSlot = new long[countGroups][slotCount];
 
         initTables(seed);
     }
@@ -41,6 +43,7 @@ public class ZobristHashing {
 
         delta ^= roomSlot[room.getId()][slotIndex];
         delta ^= teacherSlot[teacher.getId()][slotIndex];
+        delta ^= subjectGroupSlot[group.getId()][slotIndex];
 
         return delta;
     }
@@ -59,6 +62,7 @@ public class ZobristHashing {
         fillTable(teacherSlot, random);
         fillTable(roomSlot, random);
         fillTable(studentSlot, random);
+        fillTable(subjectGroupSlot, random);
     }
 
 }

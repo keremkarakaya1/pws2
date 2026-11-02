@@ -72,7 +72,7 @@ public class ChildGenerator {
         int index = state.getIndex();
 
         SubjectGroup previous = index == 0 ? null : lessonInstances.get(index - 1);
-        int allowedFromIndex = 0;
+        int allowedFromIndex = -1;
 
         if (previous == lessonInstances.get(index)) {
             ScheduledLesson lesson = state.getPlacedLesson();

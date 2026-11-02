@@ -93,7 +93,7 @@ public class TestDataGenerator {
 
         ZobristHashing zobristHashing = new ZobristHashing(
                 lessonsPerDay, days, teacherCount,
-                rooms.size(), countStudents, seed + 1);
+                rooms.size(), countStudents, groupCount, seed + 1);
 
         return new TestData(
                 roomMap,
