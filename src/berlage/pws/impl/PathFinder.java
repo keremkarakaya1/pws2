@@ -25,7 +25,6 @@ public class PathFinder implements Search {
 
     @Override
     public ScheduleState find() {
-        childGenerator.resetStats();
         childGenerator.clearSet();
         openHeap.offer(initialState);
         int pollCount = 0;
@@ -41,7 +40,6 @@ public class PathFinder implements Search {
             if (pollCount % 1000000 == 0) {
                 System.out.println("Poll Count: " + pollCount);
                 System.out.println("Heap Size: " + openHeap.size());
-                printDepthStats();
                 //System.out.println(closedSet.size());
             }
 
@@ -52,7 +50,6 @@ public class PathFinder implements Search {
                 //System.out.println("closedSet: " + closedSet.size());
                 System.out.println("HEAP size: " + openHeap.size());
                 System.out.println(lessonInstances.size());
-                printDepthStats();
 
                 return state;
             }
@@ -84,19 +81,5 @@ public class PathFinder implements Search {
         }
 
         throw new RuntimeException("NO SCHEDULE FOUND");
-    }
-
-    private void printDepthStats() {
-        int[] dead = childGenerator.deadEndsPerDepth;
-        int[] dupe = childGenerator.dupeEmptiedPerDepth;
-
-        for (int i = 0; i < dead.length; i++) {
-            if (dead[i] > 0 || dupe[i] > 0) {
-                System.out.println("depth " + i + " dead ends: " + dead[i] + " emptied by dupes: " + dupe[i]);
-            }
-        }
-
-        System.out.println("children generated: " + childGenerator.totalChildren
-                           + " new: " + childGenerator.newChildren);
     }
 }

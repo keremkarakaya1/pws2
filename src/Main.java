@@ -304,16 +304,16 @@ public class Main {
         //runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic, outputManagerBB, results);
 
 
-        /*
         PathFinder aStarWeighted = new PathFinder(testDataTiny, true, false, false, 2);
         PathFinder aStar = new PathFinder(testDataTiny, true, false, false);
         OutputManager outputManagerAStar = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstar.html");
-        runAstarBasic(aStarWeighted, outputManagerAStar, results);
-         */
+        runAstarBasic(aStar, outputManagerAStar, results);
 
-        PathFinder aStarWeightedFull = new PathFinder(testData, true, false, false, 2);
-        OutputManager outputManagerAStarWeightedFull = new OutputManager(lessonsPerDayFull, daysFull, "outputAstarWEIGHTED_FULL.html");
+        /*
+        PathFinder aStarWeightedFull = new PathFinder(testDataTiny, true, false, false, 2);
+        OutputManager outputManagerAStarWeightedFull = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstarWEIGHTED_FULL.html");
         runAstarBasic(aStarWeightedFull, outputManagerAStarWeightedFull, results);
+         */
 
         //runAstarAdvanced(aStarAdvanced, outputManagerAstarAdvanced, results);
         //runBeam(beamSearchTiny, outputManagerBeam, results);

@@ -12,7 +12,14 @@ public final class CostManager {
     private CostManager() {}
 
     public static int getTheoreticalBest(List<SubjectGroup> lessonsInstances) {
-        return GAP_WEIGHT * lessonsInstances.size();
+        int total = 0;
+
+        for (SubjectGroup group : lessonsInstances) {
+            int studentCount = group.getStudents().size();
+            total += GAP_WEIGHT * studentCount;
+        }
+
+        return total;
     }
 
     public static int calculateAdvancedHCost(Occupancy occupancy,
@@ -23,7 +30,8 @@ public final class CostManager {
                                              int[][] remainingLessonTable,
                                              int[] studentGapCount,
                                              int index,
-                                             int days) {
+                                             int days,
+                                             int weight) {
 
 
 
@@ -92,9 +100,7 @@ public final class CostManager {
         }
 
         occupancy.updateOccupancy(lesson, false);
-        return cost;
-
-
+        return cost * weight;
     }
 
     public static int calculateHCost(Occupancy occupancy,

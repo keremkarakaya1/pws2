@@ -30,11 +30,6 @@ public class ChildGenerator {
     int cannotPlaceCount = 0;
     int counter = 0;
 
-    final int[] deadEndsPerDepth;
-    final int[] dupeEmptiedPerDepth;
-    long totalChildren = 0;
-    long newChildren = 0;
-
     public ChildGenerator(TestData data, boolean gapPenalty, boolean gapOnly, boolean heuristic, boolean advanced, int weight) {
         days = data.days();
         this.lessonInstances = data.lessonInstances();
@@ -44,9 +39,6 @@ public class ChildGenerator {
         this.advanced = advanced;
         this.weight = weight;
         lessonsLeft = data.lessonsLeft();
-
-        deadEndsPerDepth = new int[lessonInstances.size() + 1];
-        dupeEmptiedPerDepth = new int[lessonInstances.size() + 1];
 
         occupancy = new Occupancy(
                 data.teacherCount(),
@@ -78,11 +70,23 @@ public class ChildGenerator {
         occupancy.buildFullState(state);
         fillPerStudentGapCount();
         int index = state.getIndex();
-        boolean legalFound = false;
+
+        SubjectGroup previous = index == 0 ? null : lessonInstances.get(index - 1);
+        int allowedFromIndex = 0;
+
+        if (previous == lessonInstances.get(index)) {
+            ScheduledLesson lesson = state.getPlacedLesson();
+            Slot slot = lesson.getSlot();
+            allowedFromIndex = slot.getFlatIndex();
+        }
 
         for (Slot slot : slots) {
             //List<Room> matchingRooms = roomMap.get(group.getTeacher().getTypeRequirement());
             //currently picking first available room
+            if (slot.getFlatIndex() <= allowedFromIndex) {
+                continue;
+            }
+
             SubjectGroup group = lessonInstances.get(index);
             RoomType requiredType = group.getTeacher().getTypeRequirement();
             Room room = getFreeRoom(requiredType, slot);
@@ -96,25 +100,20 @@ public class ChildGenerator {
                 continue;
             }
 
-            legalFound = true;
-
             ScheduledLesson scheduledLesson = new ScheduledLesson(group, slot, room);
             long delta = zobristHashing.hashFor(scheduledLesson);
             long newHash = state.getHash() ^ delta;
 
-            totalChildren++;
 
             if (!closedSet.add(newHash)) {
                 counter++;
 
-                if (counter % 100000 == 0) {
+                if (counter % 10 == 0) {
                     System.out.println("Dupecount: " + counter);
                 }
 
                 continue;
             }
-
-            newChildren++;
 
             int hCost = 0;
             int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson, gapPenalty, gapOnly);
@@ -129,7 +128,8 @@ public class ChildGenerator {
                                                             lessonsLeft,
                                                             perStudentGapCount,
                                                             index + 1,
-                                                            days);
+                                                            days,
+                                                            weight);
                 } else {
                     hCost = CostManager.calculateHCost(occupancy,
                                                     scheduledLesson,
@@ -151,15 +151,6 @@ public class ChildGenerator {
                     delta);
 
             stateList.add(childState);
-        }
-
-
-        if (stateList.isEmpty()) {
-            if (legalFound) {
-                dupeEmptiedPerDepth[index]++;
-            } else {
-                deadEndsPerDepth[index]++;
-            }
         }
 
         return stateList;
@@ -184,13 +175,6 @@ public class ChildGenerator {
 
             perStudentGapCount[student.getId()] = gapCount;
         }
-    }
-
-    public void resetStats() {
-        Arrays.fill(deadEndsPerDepth, 0);
-        Arrays.fill(dupeEmptiedPerDepth, 0);
-        totalChildren = 0;
-        newChildren = 0;
     }
 
     public Occupancy getOccupancy() {
