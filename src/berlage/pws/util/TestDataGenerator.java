@@ -2,7 +2,6 @@ package berlage.pws.util;
 
 import berlage.pws.impl.GroupCreator;
 import berlage.pws.impl.LessonInstanceBuilder;
-import berlage.pws.impl.ZobristHashing;
 import berlage.pws.model.*;
 
 import java.util.*;
@@ -91,10 +90,6 @@ public class TestDataGenerator {
         int[][] countGroupsToBeScheduledAtIndex = getCountGroupsToBeScheduled(groupCount, lessonInstances);
         int[][] lessonsLeft = createLessonCountTable(lessonInstances, students);
 
-        ZobristHashing zobristHashing = new ZobristHashing(
-                lessonsPerDay, days, teacherCount,
-                rooms.size(), countStudents, groupCount, seed + 1);
-
         return new TestData(
                 roomMap,
                 teacherPool,
@@ -112,8 +107,7 @@ public class TestDataGenerator {
                 teacherCount,
                 lessonsPerDay,
                 days,
-                maxCountSubjectPerDay,
-                zobristHashing);
+                maxCountSubjectPerDay);
     }
 
 
@@ -147,7 +141,7 @@ public class TestDataGenerator {
                 result[student.getId()][i] = result[student.getId()][i + 1];
             }
 
-            for (Student student : group.getStudents()) {
+            for (Student student : group.getStudentsSet()) {
                 result[student.getId()][i]++;
             }
         }
@@ -268,7 +262,7 @@ public class TestDataGenerator {
             if (distinct.add(lessonInstances.get(i))) {
                 SubjectGroup group = lessonInstances.get(i);
 
-                for (Student student : group.getStudents()) {
+                for (Student student : group.getStudentsSet()) {
                     result.get(student.getId()).add(group);
                 }
             }

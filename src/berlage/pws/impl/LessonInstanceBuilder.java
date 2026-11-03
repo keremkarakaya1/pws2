@@ -56,7 +56,7 @@ public final class LessonInstanceBuilder {
         for (SubjectGroup group : set) {
             Set<SubjectGroup> others = new HashSet<>();
 
-            for (Student student : group.getStudents()) {
+            for (Student student : group.getStudentsSet()) {
                 others.addAll(groupsPerStudent.get(student));
             }
 
@@ -71,7 +71,7 @@ public final class LessonInstanceBuilder {
         Map<Student, List<SubjectGroup>> result = new HashMap<>();
 
         for (SubjectGroup group : set) {
-            for (Student student : group.getStudents()) {
+            for (Student student : group.getStudentsSet()) {
                 result.computeIfAbsent(student, k -> new ArrayList<>()).add(group);
             }
         }

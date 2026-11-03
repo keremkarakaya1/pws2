@@ -12,12 +12,11 @@ public class ChildGenerator {
     private final int[][] lessonsLeft;
     private final int[][] countGroupsToBeScheduled;
     private final Occupancy occupancy;
-    private final ZobristHashing zobristHashing;
     private final List<SubjectGroup> lessonInstances;
     private final List<List<SubjectGroup>> subjectGroupsPerStudent;
     private final Map<RoomType, List<Room>> roomMap;
-    private final List<Student> studentList;
     private final int[] perStudentGapCount;
+    private final int[] students;
     private final int days;
     private final boolean gapPenalty;
     private final boolean gapOnly;
@@ -49,11 +48,16 @@ public class ChildGenerator {
 
         subjectGroupsPerStudent = data.subjectGroupsPerStudent();
         countGroupsToBeScheduled = data.countGroupsToBeScheduledAtIndex();
-        studentList = new ArrayList<>(data.students());
-        perStudentGapCount = new int[studentList.size()];
+        students = new int[data.students().size()];
+
+        int index = 0;
+        for (Student student : data.students()) {
+            students[index++] = student.getId();
+        }
+
+        perStudentGapCount = new int[students.length];
 
         roomMap = data.roomMap();
-        zobristHashing = data.zobristHashing();
     }
 
     public List<ScheduleState> generateChildren(ScheduleState state) {
@@ -64,7 +68,20 @@ public class ChildGenerator {
         List<ScheduleState> stateList = new ArrayList<>();
         occupancy.buildFullState(state);
         fillPerStudentGapCount();
+
         int index = state.getIndex();
+        int parentHCost = 0;
+        int oldGroupContribution = 0;
+
+        if (heuristic && !advanced) {
+            SubjectGroup groupToPlace = lessonInstances.get(index);
+
+            parentHCost = state.getPlacedLesson() == null
+                    ? CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight
+                    : state.getHCost();
+
+            oldGroupContribution = CostManager.getOldContribution(groupToPlace, lessonsLeft, perStudentGapCount, index);
+        }
 
         SubjectGroup previous = index == 0 ? null : lessonInstances.get(index - 1);
         int allowedFromIndex = -1;
@@ -96,7 +113,6 @@ public class ChildGenerator {
             }
 
             ScheduledLesson scheduledLesson = new ScheduledLesson(group, slot, room);
-            long delta = zobristHashing.hashFor(scheduledLesson);
 
             int hCost = 0;
             int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson, gapPenalty, gapOnly);
@@ -105,7 +121,7 @@ public class ChildGenerator {
                 if (advanced) {
                     hCost = CostManager.calculateAdvancedHCost(occupancy,
                                                             scheduledLesson,
-                                                            studentList,
+                                                            students,
                                                             subjectGroupsPerStudent,
                                                             countGroupsToBeScheduled,
                                                             lessonsLeft,
@@ -116,10 +132,11 @@ public class ChildGenerator {
                 } else {
                     hCost = CostManager.calculateHCost(occupancy,
                                                     scheduledLesson,
-                                                    studentList,
                                                     lessonsLeft,
                                                     perStudentGapCount,
-                                                    index + 1,
+                                                    index,
+                                                    parentHCost,
+                                                    oldGroupContribution,
                                                     weight);
                 }
             }
@@ -130,8 +147,8 @@ public class ChildGenerator {
                     scheduledLesson,
                     hCost,
                     gCost,
-                    index + 1,
-                    delta);
+                    index + 1);
+                    //delta
 
             stateList.add(childState);
         }
@@ -140,23 +157,23 @@ public class ChildGenerator {
     }
 
     private void fillPerStudentGapCount() {
-        for (Student student : studentList) {
+        for (int id : students) {
             int gapCount = 0;
 
             for (int i = 0; i < days; i++) {
-                int lessonCount = occupancy.getLessonCountOfStudentOnDay(student, i);
+                int lessonCount = occupancy.getLessonCountOfStudentOnDay(id, i);
 
                 if (lessonCount == 0) {
                     continue;
                 }
 
-                int firstPeriod = occupancy.getFirstOccupiedPeriod(student, i);
-                int lastPeriod = occupancy.getLastOccupiedPeriod(student, i);
+                int firstPeriod = occupancy.getFirstOccupiedPeriod(id, i);
+                int lastPeriod = occupancy.getLastOccupiedPeriod(id, i);
 
                 gapCount += lastPeriod - firstPeriod + 1 - lessonCount;
             }
 
-            perStudentGapCount[student.getId()] = gapCount;
+            perStudentGapCount[id] = gapCount;
         }
     }
 

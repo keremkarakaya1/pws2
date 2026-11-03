@@ -18,7 +18,7 @@ public class BeamSearch implements Search{
 
     public BeamSearch(TestData data, int beamWidth, boolean heuristic, boolean advanced) {
         childGenerator = new ChildGenerator(data, true, true, heuristic, advanced, 1);
-        initialState = new ScheduleState(null, null, 0, 0, 0, 0);
+        initialState = new ScheduleState(null, null, 0, 0, 0);
         heap = new Heap(false);
 
         keptStates = new ArrayList<>();

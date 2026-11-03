@@ -12,7 +12,6 @@ import java.util.*;
 public class BranchBoundDFS implements Search{
     private final Heap heap;
     private final ChildGenerator childGenerator;
-    //private final Set<Long> closedSet;
     private final ScheduleState initialState;
     private final List<SubjectGroup> lessonInstances;
     private final OutputManager outputManager;
@@ -31,7 +30,7 @@ public class BranchBoundDFS implements Search{
         heap = new Heap(true);
         outputManager = new OutputManager(data.lessonsPerDay(), data.days());
         childGenerator = new ChildGenerator(data, true, true, heuristic, advanced, 1);
-        initialState = new ScheduleState(null, null, 0,0,0,0);
+        initialState = new ScheduleState(null, null, 0,0,0);
         //closedSet = new HashSet<>();
 
         this.beamWidth = beamWidth;
@@ -60,6 +59,7 @@ public class BranchBoundDFS implements Search{
         long start = System.nanoTime();
         //int iterationCount = 0;
         int theoreticalBest = CostManager.getTheoreticalBest(lessonInstances);
+        System.out.println(theoreticalBest);
 
         ScheduleState best = beamStart ? beamBaseline : initialState;
 
@@ -67,14 +67,6 @@ public class BranchBoundDFS implements Search{
         System.out.println("SEARCH START");
 
         while (!heap.isEmpty()) {
-            //iterationCount++;
-
-            /*
-            if (iterationCount % 100000 == 0) {
-                System.out.println(Runtime.getRuntime().totalMemory());
-            }
-             */
-
             if ((System.nanoTime() - start) / 1000000000 >= timeLimitInSeconds) {
                 if (bestCost == Integer.MAX_VALUE) {
                     throw new RuntimeException("NO SCHEDULE FOUND WITHIN TIME LIMIT");
@@ -97,18 +89,13 @@ public class BranchBoundDFS implements Search{
             }
 
             if (bestCost == theoreticalBest) {
+                System.out.println("Best schedule found");
                 return best;
             }
 
             if (state.getTotalCost() >= bestCost) {
                 continue;
             }
-
-            /*
-            if (!closedSet.add(state.getHash())) {
-                continue;
-            }
-             */
 
             List<ScheduleState> children = childGenerator.generateChildren(state);
 

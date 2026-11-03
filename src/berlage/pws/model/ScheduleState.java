@@ -6,15 +6,13 @@ public class ScheduleState {
     private final int index;
     private final int hCost;
     private final int gCost;
-    private final long hash;
 
-    public ScheduleState(ScheduleState parent, ScheduledLesson placedLesson, int hCost, int gCost, int index, long delta) {
+    public ScheduleState(ScheduleState parent, ScheduledLesson placedLesson, int hCost, int gCost, int index) { //, long delta
         this.parent = parent;
         this.placedLesson = placedLesson;
         this.hCost = hCost;
         this.gCost = gCost;
         this.index = index;
-        hash = (parent == null ? 0 : parent.hash) ^ delta;
     }
 
     public ScheduleState getParent() {
@@ -40,21 +38,4 @@ public class ScheduleState {
     public int getTotalCost() {
         return hCost + gCost;
     }
-
-    public long getHash() {
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        ScheduleState that = (ScheduleState) o;
-        return hash == that.hash;
-    }
-
-    @Override
-    public int hashCode() {
-        return Long.hashCode(hash);
-    }
-
 }

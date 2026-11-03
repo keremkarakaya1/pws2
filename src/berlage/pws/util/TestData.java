@@ -1,6 +1,5 @@
 package berlage.pws.util;
 
-import berlage.pws.impl.ZobristHashing;
 import berlage.pws.model.*;
 
 import java.util.*;
@@ -22,5 +21,4 @@ public record TestData(
         int teacherCount,
         int lessonsPerDay,
         int days,
-        int maxSameSubjectCountPerDay,
-        ZobristHashing zobristHashing) {}
+        int maxSameSubjectCountPerDay) {}

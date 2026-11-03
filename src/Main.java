@@ -189,19 +189,19 @@ public class Main {
         ));
 
         Map<Subject, Integer> requiredPerWeekTiny = new EnumMap<>(Map.ofEntries(
-                Map.entry(Subject.NEDERLANDS, 1),
-                Map.entry(Subject.ENGELS, 1),
+                Map.entry(Subject.NEDERLANDS, 2),
+                Map.entry(Subject.ENGELS, 2),
                 Map.entry(Subject.FRANS, 1),
                 Map.entry(Subject.DUITS, 1),
-                Map.entry(Subject.WISKUNDE_A, 1),
+                Map.entry(Subject.WISKUNDE_A, 2),
                 Map.entry(Subject.WISKUNDE_B, 2),
-                Map.entry(Subject.WISKUNDE_C, 1),
-                Map.entry(Subject.NATUURKUNDE, 1),
-                Map.entry(Subject.SCHEIKUNDE, 1),
-                Map.entry(Subject.BIOLOGIE, 1),
-                Map.entry(Subject.GESCHIEDENIS, 1),
-                Map.entry(Subject.AARDRIJKSKUNDE, 1),
-                Map.entry(Subject.ECONOMIE, 1),
+                Map.entry(Subject.WISKUNDE_C, 2),
+                Map.entry(Subject.NATUURKUNDE, 2),
+                Map.entry(Subject.SCHEIKUNDE, 2),
+                Map.entry(Subject.BIOLOGIE, 2),
+                Map.entry(Subject.GESCHIEDENIS, 2),
+                Map.entry(Subject.AARDRIJKSKUNDE, 2),
+                Map.entry(Subject.ECONOMIE, 2),
                 Map.entry(Subject.BEDRIJFSECONOMIE, 1),
                 Map.entry(Subject.MAATSCHAPPIJLEER, 1),
                 Map.entry(Subject.CKV, 1),
@@ -222,20 +222,20 @@ public class Main {
 
         TestDataGenerator testDataGeneratorTiny = new TestDataGenerator(
                 requiredPerWeekTiny,
-                Map.of(CM,1,
-                        EM,1,
-                        NG,1,
-                        NT,1),
+                Map.of(CM,0,
+                        EM,0,
+                        NG,0,
+                        NT,0),
                 profiles,
                 electives,
                 seed,
-                20,
+                15,
                 1,
                 6,
                 1,
                 1,
                 teacherCountPerSubject * 2,
-                80,
+                40,
                 lessonsPerDayTiny,
                 maxCountSubjectPerDay,
                 daysTiny
@@ -270,7 +270,7 @@ public class Main {
         TestDataValidator.validate(testData);
         TestDataValidator.validate(testDataTiny);
 
-        //OutputManager outputManagerBB = new OutputManager(lessonsPerDayFull, daysFull, "outputBB.html");
+
         //OutputManager outputManagerDijkstra = new OutputManager(lessonsPerDayTiny, daysTiny, "outputDijkstra.html");
         //OutputManager outputManagerDFS = new OutputManager(lessonsPerDayFull, daysFull, "outputDFS.html");
         //OutputManager outputManagerBeamWithH = new OutputManager(lessonsPerDayTiny, daysTiny, "outputBEAMwH.html");
@@ -286,7 +286,7 @@ public class Main {
         //BeamSearch beamSearchTinyWithH = new BeamSearch(testDataTiny, 100000, true, true);
         //beamSearch no heuristic is better
         //BranchBoundDFS branchBoundDFSAdvanced = new BranchBoundDFS(testDataTiny, 120, 100000, true, false, true);
-        //BranchBoundDFS branchBoundDFSBasic = new BranchBoundDFS(testDataTiny, 120, 100000, true, false, false);
+
 
         ScheduleState dijkstraGoal;
         ScheduleState aStarGoal;
@@ -303,11 +303,18 @@ public class Main {
         //runBasicBranchAndBoundWHeuristic(branchBoundDFSAdvanced, outputManagerBB, results);
         //runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic, outputManagerBB, results);
 
+        /*
+        OutputManager outputManagerBB = new OutputManager(lessonsPerDayFull, daysFull, "outputBB.html");
+        BranchBoundDFS branchBoundDFSBasic = new BranchBoundDFS(testDataTiny, 120, 100000, true, true, false);
+        runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic,outputManagerBB, results);
+         */
+
 
         PathFinder aStarWeighted = new PathFinder(testDataTiny, true, false, false, 2);
         PathFinder aStar = new PathFinder(testDataTiny, true, false, false);
         OutputManager outputManagerAStar = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstar.html");
         runAstarBasic(aStar, outputManagerAStar, results);
+
 
         /*
         PathFinder aStarWeightedFull = new PathFinder(testDataTiny, true, false, false, 2);

@@ -11,12 +11,8 @@ public class Heap {
 
     private int fullSize = 10;
     private ScheduleState[] heap = new ScheduleState[fullSize];
-    //private final HashMap<ScheduleState, Integer> indexMap = new HashMap<>();
     private final boolean depthBased;
     private int currentSize = 0;
-
-    private int count = 0;
-    private int updateCount = 0;
 
     public Heap(boolean depthBased) {
         this.depthBased = depthBased;
@@ -36,9 +32,6 @@ public class Heap {
     }
 
     private void swap(int firstIndex, int secondIndex) {
-        //indexMap.put(heap[firstIndex], secondIndex);
-        //indexMap.put(heap[secondIndex], firstIndex);
-
         ScheduleState temp = heap[firstIndex];
 
         heap[firstIndex] = heap[secondIndex];
@@ -54,43 +47,9 @@ public class Heap {
         siftUp(currentSize);
 
         currentSize++;
-
-
-
-        /*
-        if (!indexMap.containsKey(state)) {
-            if (currentSize >= 3 * fullSize / 4) {
-                resize();
-            }
-
-            heap[currentSize] = state;
-            indexMap.put(state, currentSize);
-            siftUp(currentSize);
-
-            currentSize++;
-
-        } else {
-            count++;
-
-            if (count % 10000 == 0) {
-                System.out.println("Heap Update Count: " + updateCount);
-            }
-
-            int index = indexMap.get(state);
-
-            if (heap[index].getTotalCost() > state.getTotalCost()) {
-                indexMap.put(state, index);
-                heap[index] = state;
-
-                siftUp(index);
-                updateCount++;
-            }
-        }
-         */
     }
 
     public void clear() {
-        //indexMap.clear();
         Arrays.fill(heap, 0, currentSize, null);
         currentSize = 0;
     }
@@ -120,6 +79,10 @@ public class Heap {
         int costFirst = first.getTotalCost();
         int costSecond = second.getTotalCost();
 
+        if (costFirst == costSecond) {
+            return first.getHCost() < second.getHCost();
+        }
+
         return costFirst < costSecond;
     }
 
@@ -147,12 +110,6 @@ public class Heap {
 
         return bestState;
     }
-
-    /*
-    public boolean contains(ScheduleState state) {
-        return indexMap.containsKey(state);
-    }
-     */
 
     private void siftUp(int index) {
         while (index > 0 && isHigherPriority(heap[index], heap[getParent(index)])) {

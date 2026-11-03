@@ -7,6 +7,7 @@ public class SubjectGroup {
     private final Teacher teacher;
     private final Subject subject;
     private final Set<Student> set;
+    private final int[] students;
     private final int id;
 
     public SubjectGroup(Teacher teacher, Subject subject, Set<Student> set, int id) {
@@ -14,6 +15,13 @@ public class SubjectGroup {
         this.subject = subject;
         this.set = set;
         this.id = id;
+
+        students = new int[set.size()];
+        int index = 0;
+
+        for (Student student : set) {
+            students[index++] = student.getId();
+        }
     }
 
     public Teacher getTeacher() {
@@ -24,7 +32,11 @@ public class SubjectGroup {
         return subject;
     }
 
-    public Set<Student> getStudents() {
+    public int[] getStudents() {
+        return students;
+    }
+
+    public Set<Student> getStudentsSet() {
         return set;
     }
 

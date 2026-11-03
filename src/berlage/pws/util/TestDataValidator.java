@@ -116,7 +116,7 @@ public final class TestDataValidator {
         for (SubjectGroup group : instances) {
             groupRemaining[group.getId()]++;
 
-            for (Student student : group.getStudents()) {
+            for (Student student : group.getStudentsSet()) {
                 studentRemaining[student.getId()]++;
             }
         }
@@ -140,7 +140,7 @@ public final class TestDataValidator {
                 SubjectGroup placed = instances.get(position);
                 groupRemaining[placed.getId()]--;
 
-                for (Student student : placed.getStudents()) {
+                for (Student student : placed.getStudentsSet()) {
                     studentRemaining[student.getId()]--;
                 }
             }

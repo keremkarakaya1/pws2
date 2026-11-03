@@ -61,7 +61,7 @@ public class OutputManager {
         while (movingPointer != null && movingPointer.getPlacedLesson() != null) {
             ScheduledLesson lesson = movingPointer.getPlacedLesson();
             SubjectGroup group = lesson.getGroup();
-            Set<Student> students = group.getStudents();
+            Set<Student> students = group.getStudentsSet();
 
             for (Student student : students) {
                 lessonsPerStudent.computeIfAbsent(student, k -> new ArrayList<>()).add(lesson);
