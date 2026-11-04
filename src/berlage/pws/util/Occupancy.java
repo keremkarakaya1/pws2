@@ -139,20 +139,6 @@ public class Occupancy {
         return true;
     }
 
-    /*
-    public void buildFullState(ScheduleState state) {
-        clear();
-        ScheduleState temp = state;
-
-        while (temp != null && temp.getPlacedLesson() != null) {
-            ScheduledLesson lesson = temp.getPlacedLesson();
-
-            updateOccupancy(lesson, true);
-            temp = temp.getParent();
-        }
-    }
-     */
-
     public void buildFullState(ScheduleState target) {
         ScheduleState movingPointer = target;
 

@@ -8,16 +8,18 @@ import berlage.pws.util.TestData;
 import java.util.*;
 
 public class ChildGenerator {
-    private final Slot[] slots;
-    private final int[][] lessonsLeft;
-    private final int[][] countGroupsToBeScheduled;
     private final Occupancy occupancy;
     private final List<SubjectGroup> lessonInstances;
     private final List<List<SubjectGroup>> subjectGroupsPerStudent;
     private final Map<RoomType, List<Room>> roomMap;
     private final List<ScheduleState> stateList;
+    private final int[][][] placementIds;
+    private final int[][] lessonsLeft;
+    private final int[][] countGroupsToBeScheduled;
     private final int[] perStudentGapCount;
     private final int[] students;
+    private final Slot[] slots;
+    private ScheduledLesson[] placements;
     private final int days;
     private final boolean heuristic;
     private final boolean advanced;
@@ -26,10 +28,12 @@ public class ChildGenerator {
 
     public ChildGenerator(TestData data, boolean heuristic, boolean advanced, int weight) {
         days = data.days();
+        roomMap = data.roomMap();
         this.lessonInstances = data.lessonInstances();
         this.heuristic = heuristic;
         this.advanced = advanced;
         this.weight = weight;
+        this.slots = data.slots();
         lessonsLeft = data.lessonsLeft();
 
         occupancy = new Occupancy(
@@ -41,21 +45,36 @@ public class ChildGenerator {
                 data.maxSameSubjectCountPerDay(),
                 data.groupCount());
 
-        this.slots = data.slots();
 
         subjectGroupsPerStudent = data.subjectGroupsPerStudent();
         countGroupsToBeScheduled = data.countGroupsToBeScheduledAtIndex();
         students = new int[data.students().size()];
+        perStudentGapCount = new int[students.length];
+        stateList = new ArrayList<>();
+
+        int placementId = 0;
+        int upperBoundTotalPlacements = data.groupCount() * data.slots().length * data.roomCount();
+        placements = new ScheduledLesson[upperBoundTotalPlacements];
+        placementIds = new int[data.groupCount()][data.slots().length][data.roomCount()];
+
+        for (Slot slot : slots) {
+            for (Set<SubjectGroup> groups : data.subjectGroups().values()) {
+                for (SubjectGroup group : groups) {
+                    for (Room room : roomMap.get(group.getTeacher().getTypeRequirement())) {
+                        placements[placementId] = new ScheduledLesson(group, slot, room);
+                        placementIds[group.getId()][slot.getFlatIndex()][room.getId()] = placementId;
+                        placementId++;
+                    }
+                }
+            }
+        }
+
+        placements = Arrays.copyOf(placements, placementId);
 
         int index = 0;
         for (Student student : data.students()) {
             students[index++] = student.getId();
         }
-
-        perStudentGapCount = new int[students.length];
-        stateList = new ArrayList<>();
-
-        roomMap = data.roomMap();
     }
 
     public List<ScheduleState> generateChildren(ScheduleState state) {
@@ -91,8 +110,6 @@ public class ChildGenerator {
         }
 
         for (Slot slot : slots) {
-            //List<Room> matchingRooms = roomMap.get(group.getTeacher().getTypeRequirement());
-            //currently picking first available room
             if (slot.getFlatIndex() <= allowedFromIndex) {
                 continue;
             }
@@ -110,7 +127,8 @@ public class ChildGenerator {
                 continue;
             }
 
-            ScheduledLesson scheduledLesson = new ScheduledLesson(group, slot, room);
+            int placementId = placementIds[group.getId()][slot.getFlatIndex()][room.getId()];
+            ScheduledLesson scheduledLesson = placements[placementId];
 
             int hCost = 0;
             int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson);
