@@ -12,7 +12,7 @@ public class Occupancy {
     private final int[][] studentDayCount;
     private final int maxCountPerDay;
     private final int lessonsPerDay;
-    private final int days;
+    private ScheduleState loadedState;
 
     public Occupancy(int teacherCount, int roomCount, int studentCount, int lessonsPerDay, int days, int maxCountPerDay, int groupCount) {
         teacherOccupied = new boolean[teacherCount][days * lessonsPerDay];
@@ -21,9 +21,9 @@ public class Occupancy {
         countAssigned = new int[groupCount][days];
         studentDayCount = new int[studentCount][days];
 
+        loadedState = null;
         this.maxCountPerDay = maxCountPerDay;
         this.lessonsPerDay = lessonsPerDay;
-        this.days = days;
     }
 
     public int getLessonCountOfStudentOnDay(int id, int day) {
@@ -139,6 +139,7 @@ public class Occupancy {
         return true;
     }
 
+    /*
     public void buildFullState(ScheduleState state) {
         clear();
         ScheduleState temp = state;
@@ -149,6 +150,50 @@ public class Occupancy {
             updateOccupancy(lesson, true);
             temp = temp.getParent();
         }
+    }
+     */
+
+    public void buildFullState(ScheduleState target) {
+        ScheduleState movingPointer = target;
+
+        if (loadedState == null) {
+            while (movingPointer != null && movingPointer.getPlacedLesson() != null) {
+                updateOccupancy(movingPointer.getPlacedLesson(), true);
+                movingPointer = movingPointer.getParent();
+            }
+
+            loadedState = target;
+            return;
+        }
+
+        while (movingPointer.getIndex() != loadedState.getIndex()) {
+            if (loadedState.getIndex() < movingPointer.getIndex()) {
+                movingPointer = movingPointer.getParent();
+            } else {
+                updateOccupancy(loadedState.getPlacedLesson(), false);
+                loadedState = loadedState.getParent();
+            }
+        }
+
+        while (movingPointer != loadedState) {
+            updateOccupancy(loadedState.getPlacedLesson(), false);
+            movingPointer = movingPointer.getParent();
+            loadedState = loadedState.getParent();
+        }
+
+        movingPointer = target;
+
+        while (movingPointer != loadedState) {
+            updateOccupancy(movingPointer.getPlacedLesson(), true);
+            movingPointer = movingPointer.getParent();
+        }
+
+        loadedState = target;
+    }
+
+    public void reset() {
+        clear();
+        loadedState = null;
     }
 
     private void clear() {

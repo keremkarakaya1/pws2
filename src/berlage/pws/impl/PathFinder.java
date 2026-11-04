@@ -18,13 +18,14 @@ public class PathFinder implements Search {
 
     public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced, int weight) { // CHANGED (from before)
         openHeap = new Heap(depthBased);
-        childGenerator = new ChildGenerator(data, true, true, heuristic, advanced, weight);
+        childGenerator = new ChildGenerator(data, heuristic, advanced, weight);
         initialState = new ScheduleState(null, null, 0,0,0);
         this.lessonInstances = childGenerator.getLessonInstances();
     }
 
     @Override
     public ScheduleState find() {
+        childGenerator.reset();
         openHeap.offer(initialState);
         int pollCount = 0;
         int maxDepth = 0;

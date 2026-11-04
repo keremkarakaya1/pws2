@@ -29,7 +29,7 @@ public class BranchBoundDFS implements Search{
 
         heap = new Heap(true);
         outputManager = new OutputManager(data.lessonsPerDay(), data.days());
-        childGenerator = new ChildGenerator(data, true, true, heuristic, advanced, 1);
+        childGenerator = new ChildGenerator(data, heuristic, advanced, 1);
         initialState = new ScheduleState(null, null, 0,0,0);
 
         this.beamWidth = beamWidth;
@@ -44,7 +44,7 @@ public class BranchBoundDFS implements Search{
     @Override
     public ScheduleState find() {
         heap.clear();
-
+        childGenerator.reset();
         int bestCost = Integer.MAX_VALUE;
         ScheduleState beamBaseline = initialState;
 

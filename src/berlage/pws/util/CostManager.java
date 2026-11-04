@@ -154,9 +154,7 @@ public final class CostManager {
     }
 
     public static int calculateGCost(Occupancy occupancy,
-                                     ScheduledLesson lesson,
-                                     boolean gapPenalty,
-                                     boolean gapOnly) {
+                                     ScheduledLesson lesson) {
 
 
         SubjectGroup group = lesson.getGroup();
@@ -169,13 +167,7 @@ public final class CostManager {
             int lessonCount = occupancy.getLessonCountOfStudentOnDay(id, dayIndex);
 
             if (lessonCount == 0) {
-                if (!gapOnly) {
-                    //nothing uses this branch atm
-                    cost += slot.getPeriod() + GAP_WEIGHT;
-                } else {
-                    cost += GAP_WEIGHT;
-                }
-
+                cost += GAP_WEIGHT;
                 continue;
             }
 
@@ -186,24 +178,17 @@ public final class CostManager {
             int newLast = Math.max(lastPeriod, newPeriod);
 
             int spanDelta = ((newLast - newFirst) - (lastPeriod - firstPeriod));
-            //int weightedSpanDelta = spanCostDelta * SPAN_WEIGHT;
-
             int gapCost = 0;
 
-            if (gapPenalty) {
-                if (spanDelta == 0) {
-                    gapCost = 0;
-                } else {
-                    gapCost += Math.max(firstPeriod - newFirst, newLast - lastPeriod);
-                }
+            if (spanDelta == 0) {
+                gapCost = 0;
+            } else {
+                gapCost += Math.max(firstPeriod - newFirst, newLast - lastPeriod);
             }
 
             int weightedGapCost = gapCost * GAP_WEIGHT;
 
-            //int spreadCostDelta = 2 * lessonCount + 1;
-            //int weightedSpreadCostDelta = spreadCostDelta * SPREAD_WEIGHT;
-
-            cost += weightedGapCost; //weightedSpanDelta + weightedSpreadCostDelta
+            cost += weightedGapCost;
         }
 
         return cost;

@@ -19,18 +19,14 @@ public class ChildGenerator {
     private final int[] perStudentGapCount;
     private final int[] students;
     private final int days;
-    private final boolean gapPenalty;
-    private final boolean gapOnly;
     private final boolean heuristic;
     private final boolean advanced;
     private final int weight;
     int cannotPlaceCount = 0;
 
-    public ChildGenerator(TestData data, boolean gapPenalty, boolean gapOnly, boolean heuristic, boolean advanced, int weight) {
+    public ChildGenerator(TestData data, boolean heuristic, boolean advanced, int weight) {
         days = data.days();
         this.lessonInstances = data.lessonInstances();
-        this.gapPenalty = gapPenalty;
-        this.gapOnly = gapOnly;
         this.heuristic = heuristic;
         this.advanced = advanced;
         this.weight = weight;
@@ -117,7 +113,7 @@ public class ChildGenerator {
             ScheduledLesson scheduledLesson = new ScheduledLesson(group, slot, room);
 
             int hCost = 0;
-            int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson, gapPenalty, gapOnly);
+            int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson);
 
             if (heuristic) {
                 if (advanced) {
@@ -179,12 +175,8 @@ public class ChildGenerator {
         }
     }
 
-    public Occupancy getOccupancy() {
-        return occupancy;
-    }
-
-    public Slot[] getSlots() {
-        return slots;
+    public void reset() {
+        occupancy.reset();
     }
 
     public List<SubjectGroup> getLessonInstances() {
