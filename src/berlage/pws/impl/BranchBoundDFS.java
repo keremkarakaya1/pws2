@@ -31,7 +31,6 @@ public class BranchBoundDFS implements Search{
         outputManager = new OutputManager(data.lessonsPerDay(), data.days());
         childGenerator = new ChildGenerator(data, true, true, heuristic, advanced, 1);
         initialState = new ScheduleState(null, null, 0,0,0);
-        //closedSet = new HashSet<>();
 
         this.beamWidth = beamWidth;
         this.data = data;

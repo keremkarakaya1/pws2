@@ -15,6 +15,7 @@ public class ChildGenerator {
     private final List<SubjectGroup> lessonInstances;
     private final List<List<SubjectGroup>> subjectGroupsPerStudent;
     private final Map<RoomType, List<Room>> roomMap;
+    private final List<ScheduleState> stateList;
     private final int[] perStudentGapCount;
     private final int[] students;
     private final int days;
@@ -56,6 +57,7 @@ public class ChildGenerator {
         }
 
         perStudentGapCount = new int[students.length];
+        stateList = new ArrayList<>();
 
         roomMap = data.roomMap();
     }
@@ -65,7 +67,7 @@ public class ChildGenerator {
             throw new IllegalStateException("COMPLETE SCHEDULE CHILDREN REQUEST");
         }
 
-        List<ScheduleState> stateList = new ArrayList<>();
+        stateList.clear();
         occupancy.buildFullState(state);
         fillPerStudentGapCount();
 

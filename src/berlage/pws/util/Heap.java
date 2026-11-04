@@ -9,7 +9,7 @@ import java.util.NoSuchElementException;
 
 public class Heap {
 
-    private int fullSize = 10;
+    private int fullSize = (int) Math.pow(2,28);
     private ScheduleState[] heap = new ScheduleState[fullSize];
     private final boolean depthBased;
     private int currentSize = 0;
@@ -39,7 +39,7 @@ public class Heap {
     }
 
     public void offer(ScheduleState state) {
-        if (currentSize >= 3 * fullSize / 4) {
+        if (currentSize == fullSize) {
             resize();
         }
 
