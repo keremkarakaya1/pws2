@@ -18,7 +18,6 @@ public class Heap {
         this.depthBased = depthBased;
     }
 
-
     private int getLeftChild(int index) {
         return 2 * index + 1;
     }
@@ -98,9 +97,7 @@ public class Heap {
 
         ScheduleState bestState = heap[0];
         heap[0] = heap[currentSize - 1];
-        //indexMap.put(heap[0], 0);
 
-        //indexMap.remove(bestState);
         heap[currentSize - 1] = null;
         currentSize--;
 

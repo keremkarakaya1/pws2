@@ -164,7 +164,6 @@ public class ChildGenerator {
                     hCost,
                     gCost,
                     index + 1);
-                    //delta
 
             stateList.add(childState);
         }

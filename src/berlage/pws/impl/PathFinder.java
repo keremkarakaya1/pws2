@@ -11,21 +11,39 @@ public class PathFinder implements Search {
     private final ChildGenerator childGenerator;
     private final List<SubjectGroup> lessonInstances;
     private final ScheduleState initialState;
+    private int beamBest = Integer.MAX_VALUE;
 
     public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced) {
-        this(data, heuristic, depthBased, advanced, 1);
+        this(data, heuristic, depthBased, advanced, 1, null);
     }
 
-    public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced, int weight) { // CHANGED (from before)
+    public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced, int weight) {
+        this(data, heuristic, depthBased, advanced ,weight, null);
+    }
+
+    public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced,
+                      int weight, Search algorithm) {
         openHeap = new Heap(depthBased);
         childGenerator = new ChildGenerator(data, heuristic, advanced, weight);
-        initialState = new ScheduleState(null, null, 0,0,0);
+        initialState = new ScheduleState(null, null, 0, 0, 0);
+
         this.lessonInstances = childGenerator.getLessonInstances();
+
+        if (algorithm == null) {
+            throw new IllegalArgumentException("PathFinder upper bound algorithm is null");
+        }
+
+        ScheduleState beamSeed = algorithm.findOrDefault(null);
+
+        if (beamSeed != null) {
+            beamBest = beamSeed.getTotalCost();
+        }
     }
 
     @Override
     public ScheduleState find() {
         childGenerator.reset();
+        openHeap.clear();
         openHeap.offer(initialState);
         int pollCount = 0;
         int maxDepth = 0;
@@ -36,6 +54,10 @@ public class PathFinder implements Search {
             ScheduleState state = openHeap.poll();
 
             pollCount++;
+
+            if (state.getTotalCost() > beamBest) {
+                continue;
+            }
 
             if (pollCount % 1000000 == 0) {
                 System.out.println("Poll Count: " + pollCount);
@@ -75,8 +97,8 @@ public class PathFinder implements Search {
 
             List<ScheduleState> childStates = childGenerator.generateChildren(state);
 
-            for (ScheduleState child : childStates) {
-                openHeap.offer(child);
+            for (int i = 0; i < childStates.size(); i++) {
+                openHeap.offer(childStates.get(i));
             }
         }
 
