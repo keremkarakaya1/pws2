@@ -203,9 +203,9 @@ public class ChildGenerator {
     private Room getFreeRoom(RoomType type, Slot slot) {
         List<Room> rooms = roomMap.get(type);
 
-        for (Room room : rooms) {
-            if (!occupancy.isRoomBusy(room, slot)) {
-                return room;
+        for (int i = 0; i < rooms.size(); i++) {
+            if (!occupancy.isRoomBusy(rooms.get(i), slot)) {
+                return rooms.get(i);
             }
         }
 

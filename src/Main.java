@@ -42,7 +42,7 @@ public class Main {
         double runAverageAstar = OutputManager.getAverageGap(outputManagerAStar.getSchedules(aStarGoal));
         outputManagerAStar.outputSchedule(aStarGoal);
 
-        results.add(new TestResult(name, runAverageAstar, aStarGoal.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
+        results.add(new TestResult(name, runAverageAstar, aStarGoal.getTotalCost(), aStar.getLowerBound(), (end - start) / 1000000, (end - start) / 1000000000));
     }
 
     private static void runBeam(BeamSearch beam, OutputManager outputManagerBeam, List<TestResult> results) {
@@ -55,7 +55,7 @@ public class Main {
         double runAverage = OutputManager.getAverageGap(outputManagerBeam.getSchedules(beamGoal));
         outputManagerBeam.outputSchedule(beamGoal);
 
-        results.add(new TestResult(name, runAverage, beamGoal.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
+        results.add(new TestResult(name, runAverage, beamGoal.getTotalCost(), -1, (end - start) / 1000000, (end - start) / 1000000000));
     }
 
     private static void runDijkstra(PathFinder dijkstra, OutputManager outputManagerDijkstra, List<TestResult> results) {
@@ -69,7 +69,7 @@ public class Main {
         double runAverage = OutputManager.getAverageGap(outputManagerDijkstra.getSchedules(dijkstraGoal));
         outputManagerDijkstra.outputSchedule(dijkstraGoal);
 
-        results.add(new TestResult(name, runAverage, dijkstraGoal.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
+        results.add(new TestResult(name, runAverage, dijkstraGoal.getTotalCost(), -1, (end - start) / 1000000, (end - start) / 1000000000));
     }
 
     private static void runAstarAdvanced(PathFinder aStarAdvanced, OutputManager outputManagerAstarAdvanced, List<TestResult> results) {
@@ -82,7 +82,7 @@ public class Main {
         double runAverageAdvanced = OutputManager.getAverageGap(outputManagerAstarAdvanced.getSchedules(goalStateAdvanced));
         outputManagerAstarAdvanced.outputSchedule(goalStateAdvanced);
 
-        results.add(new TestResult(name, runAverageAdvanced, goalStateAdvanced.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
+        results.add(new TestResult(name, runAverageAdvanced, goalStateAdvanced.getTotalCost(), aStarAdvanced.getLowerBound(), (end - start) / 1000000, (end - start) / 1000000000));
     }
 
     private static void runBasicBranchAndBoundWHeuristic(BranchBoundDFS branchBoundDFS, OutputManager outputManagerBB, List<TestResult> results) {
@@ -95,7 +95,7 @@ public class Main {
         double runAverageAdvanced = OutputManager.getAverageGap(outputManagerBB.getSchedules(goalStateBB));
         outputManagerBB.outputSchedule(goalStateBB);
 
-        results.add(new TestResult(name, runAverageAdvanced, goalStateBB.getTotalCost(), (end - start) / 1000000, (end - start) / 1000000000));
+        results.add(new TestResult(name, runAverageAdvanced, goalStateBB.getTotalCost(), -1, (end - start) / 1000000, (end - start) / 1000000000));
     }
 
 
@@ -310,10 +310,12 @@ public class Main {
          */
 
 
-        PathFinder aStarWeighted = new PathFinder(testDataTiny, true, false, false, 2);
+
+        //PathFinder aStarWeighted = new PathFinder(testDataTiny, true, false, false, 2);
         PathFinder aStar = new PathFinder(testDataTiny, true, false, false);
         OutputManager outputManagerAStar = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstar.html");
         runAstarBasic(aStar, outputManagerAStar, results);
+
 
 
         /*
@@ -342,6 +344,7 @@ public class Main {
             System.out.println(result.name());
             System.out.println("Average gap count: " + result.averageGap());
             System.out.println("Cost: " + result.cost());
+            System.out.println("Lower bound: " + result.lowerBound());
             System.out.println("runtimeMs: " + result.runtimeMilliseconds());
             System.out.println("runtimeSeconds: " + result.runtimeSeconds());
         }

@@ -1,17 +1,24 @@
 package berlage.pws.impl;
 
 import berlage.pws.model.*;
+import berlage.pws.util.BoundTracker;
+import berlage.pws.util.CostManager;
 import berlage.pws.util.Heap;
 import berlage.pws.util.TestData;
 
 import java.util.*;
 
 public class PathFinder implements Search {
+    private final BoundTracker tracker;
     private final Heap openHeap;
     private final ChildGenerator childGenerator;
     private final List<SubjectGroup> lessonInstances;
     private final ScheduleState initialState;
+    private final int weight;
     private int beamBest = Integer.MAX_VALUE;
+    private int bound;
+    private final int theoreticalBest;
+    private int lowerBound;
 
     public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced) {
         this(data, heuristic, depthBased, advanced, 1, null);
@@ -26,17 +33,18 @@ public class PathFinder implements Search {
         openHeap = new Heap(depthBased);
         childGenerator = new ChildGenerator(data, heuristic, advanced, weight);
         initialState = new ScheduleState(null, null, 0, 0, 0);
+        tracker = new BoundTracker(data.lessonInstances(), weight);
 
+        theoreticalBest = CostManager.getTheoreticalBest(data.lessonInstances());
         this.lessonInstances = childGenerator.getLessonInstances();
+        this.weight = weight;
 
-        if (algorithm == null) {
-            throw new IllegalArgumentException("PathFinder upper bound algorithm is null");
-        }
+        if (algorithm != null) {
+            ScheduleState beamSeed = algorithm.findOrDefault(null);
 
-        ScheduleState beamSeed = algorithm.findOrDefault(null);
-
-        if (beamSeed != null) {
-            beamBest = beamSeed.getTotalCost();
+            if (beamSeed != null) {
+                beamBest = beamSeed.getTotalCost();
+            }
         }
     }
 
@@ -45,6 +53,7 @@ public class PathFinder implements Search {
         childGenerator.reset();
         openHeap.clear();
         openHeap.offer(initialState);
+        tracker.track(initialState, true);
         int pollCount = 0;
         int maxDepth = 0;
         int maxHeapSize = 0;
@@ -52,18 +61,9 @@ public class PathFinder implements Search {
 
         while (!openHeap.isEmpty()) {
             ScheduleState state = openHeap.poll();
+            tracker.track(state, false);
 
             pollCount++;
-
-            if (state.getTotalCost() > beamBest) {
-                continue;
-            }
-
-            if (pollCount % 1000000 == 0) {
-                System.out.println("Poll Count: " + pollCount);
-                System.out.println("Heap Size: " + openHeap.size());
-                //System.out.println(closedSet.size());
-            }
 
             if (state.getIndex() == lessonInstances.size()) {
                 System.out.println("pollCount: " + pollCount);
@@ -71,6 +71,11 @@ public class PathFinder implements Search {
                 System.out.println("maxHeapSize: " + maxHeapSize);
                 //System.out.println("closedSet: " + closedSet.size());
                 System.out.println("HEAP size: " + openHeap.size());
+
+                int found = state.getTotalCost();
+                bound = tracker.getBound();
+                lowerBound = Math.min(found, Math.max(bound, Math.max(theoreticalBest, found / weight)));
+                System.out.println("BOUND: " + lowerBound + " (found cost " + found + ")");
                 System.out.println(lessonInstances.size());
 
                 return state;
@@ -98,10 +103,29 @@ public class PathFinder implements Search {
             List<ScheduleState> childStates = childGenerator.generateChildren(state);
 
             for (int i = 0; i < childStates.size(); i++) {
+                ScheduleState childState = childStates.get(i);
+
+                if (childState.getGCost() + childState.getHCost() / weight > beamBest) {
+                    continue;
+                }
+
+                tracker.track(childState, true);
                 openHeap.offer(childStates.get(i));
+            }
+
+            if (pollCount % 1000000 == 0) {
+                System.out.println("Poll Count: " + pollCount);
+                System.out.println("Heap Size: " + openHeap.size());
+                bound = tracker.getBound();
+                System.out.println("BOUND: " + bound);
+                //System.out.println(closedSet.size());
             }
         }
 
         throw new RuntimeException("NO SCHEDULE FOUND");
+    }
+
+    public int getLowerBound() {
+        return lowerBound;
     }
 }

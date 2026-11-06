@@ -7,7 +7,7 @@ import java.util.List;
 public final class CostManager {
     private static final int SPAN_WEIGHT = 0;
     private static final int SPREAD_WEIGHT = 0;
-    private static final int GAP_WEIGHT = 10;
+    public static final int GAP_WEIGHT = 10;
 
     private CostManager() {}
 
@@ -33,6 +33,7 @@ public final class CostManager {
             cost += Math.max(0, lessonsLeft - studentGapCount[id]) * GAP_WEIGHT;
         }
 
+        System.out.println("ROOT ESTIMATE: " + cost);
         return cost;
     }
 
