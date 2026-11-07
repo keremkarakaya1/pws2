@@ -14,6 +14,7 @@ public class PathFinder implements Search {
     private final ChildGenerator childGenerator;
     private final List<SubjectGroup> lessonInstances;
     private final ScheduleState initialState;
+    private final ScheduleState beamSeed;
     private final int weight;
     private int beamBest = Integer.MAX_VALUE;
     private int bound;
@@ -40,11 +41,13 @@ public class PathFinder implements Search {
         this.weight = weight;
 
         if (algorithm != null) {
-            ScheduleState beamSeed = algorithm.findOrDefault(null);
+            beamSeed = algorithm.findOrDefault(null);
 
             if (beamSeed != null) {
                 beamBest = beamSeed.getTotalCost();
             }
+        } else {
+            beamSeed = null;
         }
     }
 
@@ -67,18 +70,7 @@ public class PathFinder implements Search {
             pollCount++;
 
             if (state.getIndex() == lessonInstances.size()) {
-                System.out.println("pollCount: " + pollCount);
-                System.out.println("maxDepth: " + maxDepth);
-                System.out.println("maxHeapSize: " + maxHeapSize);
-                //System.out.println("closedSet: " + closedSet.size());
-                System.out.println("HEAP size: " + openHeap.size());
-
-                int found = state.getTotalCost();
-                bound = tracker.getBound();
-                lowerBound = Math.min(found, Math.max(bound, Math.max(theoreticalBest, found / weight)));
-                System.out.println("BOUND: " + lowerBound + " (found cost " + found + ")");
-                System.out.println(lessonInstances.size());
-
+                printGoalStatistics(state, maxHeapSize, pollCount, maxDepth);
                 return state;
             }
 
@@ -106,7 +98,7 @@ public class PathFinder implements Search {
             for (int i = 0; i < childStates.size(); i++) {
                 ScheduleState childState = childStates.get(i);
 
-                if (childState.getGCost() + childState.getHCost() / weight > beamBest) {
+                if (childState.getGCost() + childState.getHCost() / weight >= beamBest) {
                     continue;
                 }
 
@@ -123,10 +115,30 @@ public class PathFinder implements Search {
             }
         }
 
-        throw new RuntimeException("NO SCHEDULE FOUND");
+        if (beamBest == Integer.MAX_VALUE) {
+            throw new RuntimeException("NO SCHEDULE FOUND");
+        }
+
+        printGoalStatistics(beamSeed, maxHeapSize, pollCount, maxDepth);
+        System.out.println("OPTIMAL SCHEDULE FOUND BY SEED: " + beamSeed.getTotalCost());
+        return beamSeed;
     }
 
     public int getLowerBound() {
         return lowerBound;
+    }
+
+    private void printGoalStatistics(ScheduleState state, long maxHeapSize, int pollCount, int maxDepth) {
+        System.out.println("pollCount: " + pollCount);
+        System.out.println("maxDepth: " + maxDepth);
+        System.out.println("maxHeapSize: " + maxHeapSize);
+        //System.out.println("closedSet: " + closedSet.size());
+        System.out.println("HEAP size: " + openHeap.size());
+
+        int found = state.getTotalCost();
+        bound = tracker.getBound();
+        lowerBound = Math.min(found, Math.max(bound, Math.max(theoreticalBest, found / weight)));
+        System.out.println("BOUND: " + lowerBound + " (found cost " + found + ")");
+        System.out.println(lessonInstances.size());
     }
 }
