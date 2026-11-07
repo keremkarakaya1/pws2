@@ -7,9 +7,9 @@ import java.util.Arrays;
 public class Occupancy {
     private final boolean[][] teacherOccupied;
     private final boolean[][] roomOccupied;
-    private final boolean[][] studentOccupied;
+    private final int[][] studentOccupied;
     private final int[][] countAssigned;
-    private final int[][] studentDayCount;
+    //private final int[][] studentDayCount;
     private final int maxCountPerDay;
     private final int lessonsPerDay;
     private ScheduleState loadedState;
@@ -17,9 +17,9 @@ public class Occupancy {
     public Occupancy(int teacherCount, int roomCount, int studentCount, int lessonsPerDay, int days, int maxCountPerDay, int groupCount) {
         teacherOccupied = new boolean[teacherCount][days * lessonsPerDay];
         roomOccupied = new boolean[roomCount][days * lessonsPerDay];
-        studentOccupied = new boolean[studentCount][days * lessonsPerDay];
+        studentOccupied = new int[studentCount][days];
         countAssigned = new int[groupCount][days];
-        studentDayCount = new int[studentCount][days];
+        //studentDayCount = new int[studentCount][days];
 
         loadedState = null;
         this.maxCountPerDay = maxCountPerDay;
@@ -27,29 +27,16 @@ public class Occupancy {
     }
 
     public int getLessonCountOfStudentOnDay(int id, int day) {
-        return studentDayCount[id][day];
+        return Integer.bitCount(studentOccupied[id][day]);
     }
 
-    public boolean[] getStudentScheduleOnDay(int id, int day) {
+    public int getStudentScheduleOnDay(int id, int day) {
         if (getLessonCountOfStudentOnDay(id,day) == 0) {
             throw new IllegalStateException("EMPTY DAY");
         }
 
-        boolean[] studentSlots = studentOccupied[id];
-        int startingIndex = day * lessonsPerDay;
-        int endingIndex = day * lessonsPerDay + lessonsPerDay - 1;
-
-        while (endingIndex > startingIndex && !studentSlots[endingIndex]) {
-            endingIndex--;
-        }
-
-        boolean[] result = new boolean[endingIndex - startingIndex + 1];
-
-        for (int i = 0; i < result.length; i++) {
-            result[i] = studentSlots[startingIndex++];
-        }
-
-        return result;
+        int dayBits = studentOccupied[id][day];
+        return dayBits;
     }
 
     public void updateOccupancy(ScheduledLesson lesson, boolean place) {
@@ -58,45 +45,48 @@ public class Occupancy {
         Room room = lesson.getRoom();
         Slot slot = lesson.getSlot();
         int flatIndex = slot.getFlatIndex();
+        int period = slot.getPeriod();
         int day = slot.getDay();
         int change = place ? 1 : -1;
+        int bitChange = 1 << period;
 
         teacherOccupied[teacher.getId()][flatIndex] = place;
         roomOccupied[room.getId()][flatIndex] = place;
         countAssigned[group.getId()][day] += change;
 
-        for (int id : group.getStudents()) {
-            studentOccupied[id][flatIndex] = place;
-            studentDayCount[id][day] += change;
+        if (place) {
+            for (int id : group.getStudents()) {
+                studentOccupied[id][day] |= bitChange;
+                //studentDayCount[id][day]++;
+            }
+        } else {
+            for (int id : group.getStudents()) {
+                studentOccupied[id][day] &= ~bitChange;
+                //studentDayCount[id][day]--;
+            }
         }
     }
 
     public int getFirstOccupiedPeriod(int id, int day) {
-        boolean[] studentSlots = studentOccupied[id];
-        int startingIndex = day * lessonsPerDay;
-        int endingIndex = day * lessonsPerDay + lessonsPerDay;
+        int dayBits =  studentOccupied[id][day];
 
-        for (int i = startingIndex; i < endingIndex; i++) {
-            if (studentSlots[i]) {
-                return i - startingIndex;
-            }
+        if (dayBits == 0) {
+            throw new IllegalStateException("OCCUPANCY FAIL: empty day check fail (FIRST)");
         }
 
-        throw new IllegalStateException("OCCUPANCY FAIL: empty day check fail (FIRST)");
+        int countTrailingZeros = Integer.numberOfTrailingZeros(dayBits);
+        return countTrailingZeros;
     }
 
     public int getLastOccupiedPeriod(int id, int day) {
-        boolean[] studentSlots = studentOccupied[id];
-        int startingIndex = day * lessonsPerDay;
-        int endingIndex = day * lessonsPerDay + lessonsPerDay;
+        int dayBits =  studentOccupied[id][day];
 
-        for (int i = endingIndex - 1; i >= startingIndex; i--) {
-            if (studentSlots[i]) {
-                return i - startingIndex;
-            }
+        if (dayBits == 0) {
+            throw new IllegalStateException("OCCUPANCY FAIL: empty day check fail (LAST)");
         }
 
-        throw new IllegalStateException("OCCUPANCY FAIL: empty day check fail (LAST)");
+        int countLeadingZeros = Integer.numberOfLeadingZeros(dayBits);
+        return 31 - countLeadingZeros;
     }
 
     public boolean isTeacherBusy(Teacher teacher, int day, int index) {
@@ -111,8 +101,9 @@ public class Occupancy {
         return roomOccupied[room.getId()][slot.getFlatIndex()];
     }
 
-    private boolean isStudentBusy(int id, Slot slot) {
-        return studentOccupied[id][slot.getFlatIndex()];
+    public boolean isStudentBusy(int id, Slot slot) {
+        int dayBits = studentOccupied[id][slot.getDay()];
+        return (dayBits & (1 << slot.getPeriod())) != 0;
     }
 
     public boolean canPlace(SubjectGroup group, Slot slot) {
@@ -192,15 +183,15 @@ public class Occupancy {
         }
 
         for (int i = 0; i < studentOccupied.length; i++) {
-            Arrays.fill(studentOccupied[i], false);
+            Arrays.fill(studentOccupied[i], 0);
         }
 
         for (int i = 0; i < countAssigned.length; i++) {
             Arrays.fill(countAssigned[i], 0);
         }
 
-        for (int i = 0; i < studentDayCount.length; i++) {
-            Arrays.fill(studentDayCount[i], 0);
-        }
+        //for (int i = 0; i < studentDayCount.length; i++) {
+          //  Arrays.fill(studentDayCount[i], 0);
+       // }
     }
 }

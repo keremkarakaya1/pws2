@@ -78,15 +78,12 @@ public final class CostManager {
                     continue;
                 }
 
-                int j = 0;
-                boolean[] lessons = occupancy.getStudentScheduleOnDay(id, i);
+                int firstOccupiedPeriod = occupancy.getFirstOccupiedPeriod(id,i);
+                int lastOccupiedPeriod = occupancy.getLastOccupiedPeriod(id,i);
+                int dayBits = occupancy.getStudentScheduleOnDay(id, i);
 
-                while (j < lessons.length && !lessons[j]) {
-                    j++;
-                }
-
-                for ( ; j < lessons.length; j++) {
-                    if (lessons[j]) {
+                for (int j = firstOccupiedPeriod; j < lastOccupiedPeriod; j++) {
+                    if ((dayBits & (1 << j)) != 0) {
                         continue;
                     }
 
