@@ -52,6 +52,7 @@ public class PathFinder implements Search {
     public ScheduleState find() {
         childGenerator.reset();
         openHeap.clear();
+        tracker.reset();
         openHeap.offer(initialState);
         tracker.track(initialState, true);
         int pollCount = 0;

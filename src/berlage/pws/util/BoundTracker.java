@@ -22,6 +22,7 @@ public class BoundTracker {
         int index = (cost - offset) / CostManager.GAP_WEIGHT;
 
         if (index < 0) {
+            System.out.println("NEGATIVE INDEX");
             index = 0;
         }
 
@@ -48,5 +49,9 @@ public class BoundTracker {
 
     private void resize() {
         counts = Arrays.copyOf(counts, counts.length * 2);
+    }
+
+    public void reset() {
+        Arrays.fill(counts,0);
     }
 }
