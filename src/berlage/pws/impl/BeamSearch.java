@@ -54,7 +54,7 @@ public class BeamSearch implements Search{
                 throw new RuntimeException("Beam Search fail -- Increase Width");
             }
 
-            int count = Math.min(beamWidth, heap.size());
+            long count = Math.min(beamWidth, heap.size());
 
             for (int i = 0; i < count; i++) {
                 keptStates.add(heap.poll());

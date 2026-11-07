@@ -57,7 +57,7 @@ public class PathFinder implements Search {
         tracker.track(initialState, true);
         int pollCount = 0;
         int maxDepth = 0;
-        int maxHeapSize = 0;
+        long maxHeapSize = 0;
         int lastSeenIndex = 0;
 
         while (!openHeap.isEmpty()) {

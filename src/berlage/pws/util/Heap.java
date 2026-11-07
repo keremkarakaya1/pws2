@@ -4,52 +4,73 @@ package berlage.pws.util;
 import berlage.pws.model.ScheduleState;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.NoSuchElementException;
 
 public class Heap {
-
-    private int fullSize = (int) Math.pow(2,28);
-    private ScheduleState[] heap = new ScheduleState[fullSize];
+    private final int powerChunkSize = 24;
+    private final int countChunks = 128;
+    private final int chunkSize = (int) Math.pow(2,powerChunkSize);
+    private final ScheduleState[][] heap = new ScheduleState[countChunks][];
     private final boolean depthBased;
-    private int currentSize = 0;
+    private long currentSize = 0;
+
 
     public Heap(boolean depthBased) {
         this.depthBased = depthBased;
     }
 
-    private int getLeftChild(int index) {
+    private long getLeftChild(long index) {
         return 2 * index + 1;
     }
 
-    private int getRightChild(int index) {
+    private long getRightChild(long index) {
         return 2 * index + 2;
     }
 
-    private int getParent(int index) {
+    private long getParent(long index) {
         return (index - 1) / 2;
     }
 
-    private void swap(int firstIndex, int secondIndex) {
-        ScheduleState temp = heap[firstIndex];
+    private int getContainer(long index) {
+        return (int)(index >> powerChunkSize);
+    }
 
-        heap[firstIndex] = heap[secondIndex];
-        heap[secondIndex] = temp;
+    private int getSpot(long index) {
+        return (int)(index & (chunkSize - 1));
+    }
+
+    private void swap(long firstIndex, long secondIndex) {
+        int containerFirst = getContainer(firstIndex);
+        int containerSecond = getContainer(secondIndex);
+
+        int spotFirst = getSpot(firstIndex);
+        int spotSecond = getSpot(secondIndex);
+
+        ScheduleState temp = heap[containerFirst][spotFirst];
+
+        heap[containerFirst][spotFirst] = heap[containerSecond][spotSecond];
+        heap[containerSecond][spotSecond] = temp;
     }
 
     public void offer(ScheduleState state) {
-        if (currentSize == fullSize) {
-            resize();
+        int container = getContainer(currentSize);
+        int spot = getSpot(currentSize);
+
+        if (container >= countChunks) {
+            throw new RuntimeException("HEAP FULL");
         }
 
-        heap[currentSize] = state;
-        siftUp(currentSize);
+        if (heap[container] == null) {
+            heap[container] = new ScheduleState[chunkSize];
+        }
 
+        heap[container][spot] = state;
+        siftUp(currentSize);
         currentSize++;
     }
 
     public void clear() {
-        Arrays.fill(heap, 0, currentSize, null);
+        Arrays.fill(heap, null);
         currentSize = 0;
     }
 
@@ -57,12 +78,8 @@ public class Heap {
         return currentSize == 0;
     }
 
-    public int size() {
+    public long size() {
         return currentSize;
-    }
-
-    public int capacity() {
-        return fullSize;
     }
 
     private boolean isHigherPriority(ScheduleState first, ScheduleState second) {
@@ -85,21 +102,20 @@ public class Heap {
         return costFirst < costSecond;
     }
 
-    private void resize() {
-        fullSize *= 2;
-        heap = Arrays.copyOf(heap, fullSize);
-    }
-
     public ScheduleState poll() {
         if (isEmpty()) {
             throw new NoSuchElementException("EMPTY HEAP ON POLL");
         }
 
-        ScheduleState bestState = heap[0];
-        heap[0] = heap[currentSize - 1];
-
-        heap[currentSize - 1] = null;
         currentSize--;
+
+        int lastOccupiedContainer = getContainer(currentSize);
+        int spot = getSpot(currentSize);
+
+        ScheduleState bestState = heap[0][0];
+        heap[0][0] = heap[lastOccupiedContainer][spot];
+
+        heap[lastOccupiedContainer][spot] = null;
 
         if (currentSize > 0) {
             siftDown(0);
@@ -108,24 +124,45 @@ public class Heap {
         return bestState;
     }
 
-    private void siftUp(int index) {
-        while (index > 0 && isHigherPriority(heap[index], heap[getParent(index)])) {
+    private void siftUp(long index) {
+        int container = getContainer(index);
+        int spot = getSpot(index);
+        long parentIndex = getParent(index);
+
+        while (index > 0 && isHigherPriority(heap[container][spot], heap[getContainer(parentIndex)][getSpot(parentIndex)])) {
             swap(index, getParent(index));
             index = getParent(index);
+
+            parentIndex = getParent(index);
+            container = getContainer(index);
+            spot = getSpot(index);
         }
     }
 
-    private void siftDown(int index) {
+    private void siftDown(long index) {
         while (index < currentSize) {
-            int newIndex = index;
-            int left = getLeftChild(index);
-            int right = getRightChild(index);
+            long newIndex = index;
+            long left = getLeftChild(index);
+            long right = getRightChild(index);
 
-            if (left < currentSize && isHigherPriority(heap[left], heap[newIndex])) {
+            int leftContainer = getContainer(left);
+            int rightContainer = getContainer(right);
+            int indexContainer = getContainer(newIndex);
+
+            int leftSpot = getSpot(left);
+            int rightSpot = getSpot(right);
+            int indexSpot = getSpot(newIndex);
+
+            if (left < currentSize && isHigherPriority(heap[leftContainer][leftSpot], heap[indexContainer][indexSpot])) {
                 newIndex = left;
             }
 
-            if (right < currentSize && isHigherPriority(heap[right], heap[newIndex])) {
+            if (newIndex != index) {
+                indexContainer = getContainer(newIndex);
+                indexSpot = getSpot(newIndex);
+            }
+
+            if (right < currentSize && isHigherPriority(heap[rightContainer][rightSpot], heap[indexContainer][indexSpot])) {
                 newIndex = right;
             }
 
