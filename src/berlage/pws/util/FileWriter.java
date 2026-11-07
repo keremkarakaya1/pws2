@@ -39,8 +39,8 @@ public class FileWriter {
 
             bufferedWriter.newLine();
 
-            for (Map.Entry<RoomType, List<Room>> entry : data.roomMap().entrySet()) {
-                bufferedWriter.write("RoomType: " + entry.getKey() + " Rooms: " + entry.getValue());
+            for (Map.Entry<RoomType, Room[]> entry : data.roomMap().entrySet()) {
+                bufferedWriter.write("RoomType: " + entry.getKey() + " Rooms: " + Arrays.toString(entry.getValue()));
                 bufferedWriter.newLine();
             }
 

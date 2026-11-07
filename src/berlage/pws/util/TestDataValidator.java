@@ -50,8 +50,8 @@ public final class TestDataValidator {
 
         int allRooms = 0;
 
-        for (List<Room> list : data.roomMap().values()) {
-            allRooms += list.size();
+        for (Room[] rooms : data.roomMap().values()) {
+            allRooms += rooms.length;
         }
 
         if (allRooms != roomCount) {
@@ -206,8 +206,8 @@ public final class TestDataValidator {
             teachersArray[teacher.getId()] = true;
         }
 
-        for (List<Room> roomList : data.roomMap().values()) {
-            for (Room room : roomList) {
+        for (Room[] rooms : data.roomMap().values()) {
+            for (Room room : rooms) {
                 if (room.getId() < 0 || room.getId() >= roomsArray.length) {
                     throw new IllegalArgumentException("Post validation fail: Room IDs contain gaps " + room.getId());
                 }

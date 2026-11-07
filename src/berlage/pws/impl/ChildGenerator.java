@@ -11,7 +11,7 @@ public class ChildGenerator {
     private final Occupancy occupancy;
     private final List<SubjectGroup> lessonInstances;
     private final List<List<SubjectGroup>> subjectGroupsPerStudent;
-    private final Map<RoomType, List<Room>> roomMap;
+    private final Map<RoomType, Room[]> roomMap;
     private final List<ScheduleState> stateList;
     private final int[][][] placementIds;
     private final int[][] lessonsLeft;
@@ -109,21 +109,22 @@ public class ChildGenerator {
             allowedFromIndex = slot.getFlatIndex();
         }
 
+        SubjectGroup group = lessonInstances.get(index);
+        RoomType requiredType = group.getTeacher().getTypeRequirement();
+
         for (Slot slot : slots) {
             if (slot.getFlatIndex() <= allowedFromIndex) {
                 continue;
             }
 
-            SubjectGroup group = lessonInstances.get(index);
-            RoomType requiredType = group.getTeacher().getTypeRequirement();
-            Room room = getFreeRoom(requiredType, slot);
-
-            if (room == null) {
+            if (!occupancy.canPlace(group, slot)) {
+                cannotPlaceCount++;
                 continue;
             }
 
-            if (!occupancy.canPlace(group, slot)) {
-                cannotPlaceCount++;
+            Room room = getFreeRoom(requiredType, slot);
+
+            if (room == null) {
                 continue;
             }
 
@@ -201,11 +202,11 @@ public class ChildGenerator {
     }
 
     private Room getFreeRoom(RoomType type, Slot slot) {
-        List<Room> rooms = roomMap.get(type);
+        Room[] rooms = roomMap.get(type);
 
-        for (int i = 0; i < rooms.size(); i++) {
-            if (!occupancy.isRoomBusy(rooms.get(i), slot)) {
-                return rooms.get(i);
+        for (int i = 0; i < rooms.length; i++) {
+            if (!occupancy.isRoomBusy(rooms[i], slot)) {
+                return rooms[i];
             }
         }
 

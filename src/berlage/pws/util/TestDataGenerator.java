@@ -12,7 +12,7 @@ public class TestDataGenerator {
     private final Set<Subject> electiveSubjects;
     private final Set<Profile> profiles;
     private final Map<RoomType, Integer> countPerRoomType;
-    private final Map<RoomType, List<Room>> roomMap;
+    private final Map<RoomType, Room[]> roomMap;
     private final Map<Profile, Integer> electiveCountPerProfile;
     private final int classCapacity;
     private final int teacherCountPerSubject;
@@ -115,7 +115,7 @@ public class TestDataGenerator {
         Map<RoomType, Integer> result = new EnumMap<>(RoomType.class);
 
         for (RoomType type : RoomType.values()) {
-            result.put(type, roomMap.get(type).size());
+            result.put(type, roomMap.get(type).length);
         }
 
         return result;
@@ -125,7 +125,7 @@ public class TestDataGenerator {
         List<Room> result = new ArrayList<>();
 
         for (RoomType type : RoomType.values()) {
-            result.addAll(roomMap.get(type));
+            result.addAll(List.of(roomMap.get(type)));
         }
 
         return result;
@@ -222,7 +222,7 @@ public class TestDataGenerator {
         }
 
         for (RoomType type : RoomType.values()) {
-            if (roomMap.get(type).isEmpty()) {
+            if (roomMap.get(type).length == 0) {
                 throw new IllegalArgumentException("INVALID INPUT: no available rooms with type: " + type);
             }
         }
@@ -271,9 +271,9 @@ public class TestDataGenerator {
         return Collections.unmodifiableList(result);
     }
 
-    private Map<RoomType, List<Room>> generateRooms() {
+    private Map<RoomType, Room[]> generateRooms() {
         int id = 0;
-        Map<RoomType, List<Room>> map = new EnumMap<>(RoomType.class);
+        Map<RoomType, Room[]> map = new EnumMap<>(RoomType.class);
         Map<RoomType, Integer> countPerType = Map.of(
               RoomType.REGULAR, countRegular,
               RoomType.GYM, countGym,
@@ -281,10 +281,10 @@ public class TestDataGenerator {
         );
 
         for (RoomType type : RoomType.values()) {
-            map.put(type, new ArrayList<>());
+            map.put(type, new Room[countPerType.get(type)]);
 
             for (int i = 0; i < countPerType.get(type); i++) {
-                map.get(type).add(new Room(id++, type));
+                map.get(type)[i] = new Room(id++, type);
             }
         }
 

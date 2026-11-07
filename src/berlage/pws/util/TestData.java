@@ -5,7 +5,7 @@ import berlage.pws.model.*;
 import java.util.*;
 
 public record TestData(
-        Map<RoomType, List<Room>> roomMap,
+        Map<RoomType, Room[]> roomMap,
         Map<Subject, Set<Teacher>> teacherPool,
         Map<RoomType,Integer> countPerRoomType,
         Set<Student> students,
