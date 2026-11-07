@@ -204,30 +204,6 @@ public final class CostManager {
         return gapChange;
     }
 
-    public static int convertBeamCost(ScheduledLesson[][][] scheduledLessons) {
-        int cost = 0;
-
-        for (int i = 0; i < scheduledLessons.length; i++) {
-            for (int j = 0; j < scheduledLessons[i].length; j++) {
-
-                int start = 0;
-                int end = scheduledLessons[i][j].length - 1;
-
-                while (start <= end && scheduledLessons[i][j][start] == null) {
-                    start++;
-                }
-
-                while (end >= start && scheduledLessons[i][j][end] == null) {
-                    end--;
-                }
-
-                cost += (end - start + 1) * GAP_WEIGHT;
-            }
-        }
-
-        return cost;
-    }
-
     public static int getOldContribution(SubjectGroup group, int[][] remainingLessonTable, int[] studentGapCount, int index) {
         int cost = 0;
 

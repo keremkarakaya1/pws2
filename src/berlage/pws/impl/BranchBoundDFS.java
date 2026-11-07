@@ -4,7 +4,6 @@ import berlage.pws.model.ScheduleState;
 import berlage.pws.model.SubjectGroup;
 import berlage.pws.util.CostManager;
 import berlage.pws.util.Heap;
-import berlage.pws.util.OutputManager;
 import berlage.pws.util.TestData;
 
 import java.util.*;
@@ -14,53 +13,48 @@ public class BranchBoundDFS implements Search{
     private final ChildGenerator childGenerator;
     private final ScheduleState initialState;
     private final List<SubjectGroup> lessonInstances;
-    private final OutputManager outputManager;
-    private final TestData data;
-    private final int beamWidth;
+    private final ScheduleState seedState;
     private final int timeLimitInSeconds;
-    private final boolean beamStart;
 
     public BranchBoundDFS(TestData data,
                           int timeLimitInSeconds,
-                          int beamWidth,
                           boolean heuristic,
-                          boolean beamStart,
                           boolean advanced) {
+        this(data, timeLimitInSeconds, heuristic, false, advanced, null);
+    }
+
+
+    public BranchBoundDFS(TestData data,
+                          int timeLimitInSeconds,
+                          boolean heuristic,
+                          boolean seeded,
+                          boolean advanced,
+                          Search algorithm) {
+
+        if (seeded && algorithm == null) {
+            throw new RuntimeException("SEARCH ALG NULL -> BB");
+        }
 
         heap = new Heap(true);
-        outputManager = new OutputManager(data.lessonsPerDay(), data.days());
         childGenerator = new ChildGenerator(data, heuristic, advanced, 1);
         initialState = new ScheduleState(null, null, 0,0,0);
+        seedState = seeded ? algorithm.findOrDefault(initialState) : null;
 
-        this.beamWidth = beamWidth;
-        this.data = data;
         this.lessonInstances = childGenerator.getLessonInstances();
         this.timeLimitInSeconds = timeLimitInSeconds;
-        this.beamStart = beamStart;
-
-
     }
 
     @Override
     public ScheduleState find() {
         heap.clear();
         childGenerator.reset();
-        int bestCost = Integer.MAX_VALUE;
-        ScheduleState beamBaseline = initialState;
-
-        if (beamStart) {
-            BeamSearch beamSearch = new BeamSearch(data, beamWidth, false, false);
-            beamBaseline = beamSearch.find();
-            bestCost = Math.min(bestCost, CostManager.convertBeamCost(outputManager.getSchedules(beamBaseline)));
-            System.out.println("BEST COST: " + bestCost);
-        }
+        ScheduleState best = seedState == null ? initialState : seedState;
+        int bestCost = seedState == null || seedState == initialState ? Integer.MAX_VALUE : seedState.getTotalCost();
+        System.out.println("BEST COST: " + bestCost);
 
         long start = System.nanoTime();
-        //int iterationCount = 0;
         int theoreticalBest = CostManager.getTheoreticalBest(lessonInstances);
         System.out.println(theoreticalBest);
-
-        ScheduleState best = beamStart ? beamBaseline : initialState;
 
         heap.offer(initialState);
         System.out.println("SEARCH START");
@@ -71,6 +65,12 @@ public class BranchBoundDFS implements Search{
                     throw new RuntimeException("NO SCHEDULE FOUND WITHIN TIME LIMIT");
                 }
 
+                System.out.println("Found schedule is NOT proven optimal");
+                return best;
+            }
+
+            if (bestCost == theoreticalBest) {
+                System.out.println("Best schedule found");
                 return best;
             }
 
@@ -87,10 +87,6 @@ public class BranchBoundDFS implements Search{
                 continue;
             }
 
-            if (bestCost == theoreticalBest) {
-                System.out.println("Best schedule found");
-                return best;
-            }
 
             if (state.getTotalCost() >= bestCost) {
                 continue;

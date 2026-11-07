@@ -33,6 +33,8 @@ public class BeamSearch implements Search{
     public ScheduleState find() {
         int index = initialState.getIndex();
         childGenerator.reset();
+        heap.clear();
+        keptStates.clear();
 
         while (index < lessonInstances.size()) {
             System.out.println("cannotPlaceCount: " + childGenerator.cannotPlaceCount);
