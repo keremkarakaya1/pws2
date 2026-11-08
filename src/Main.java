@@ -280,7 +280,7 @@ public class Main {
         //PathFinder dfs = new PathFinder(testData, false, true, false);
         //PathFinder dijkstra = new PathFinder(testDataTiny, false, false, false);
         //BeamSearch beamSearch = new BeamSearch(testData, 100000, true, false);
-        //BeamSearch beamSearchNoH = new BeamSearch(testData, 100000, false, false);
+
         //BeamSearch beamSearchFullH = new BeamSearch(testData, 100000, true, true);
 
         //BeamSearch beamSearchTinyWithH = new BeamSearch(testDataTiny, 100000, true, true);
@@ -303,11 +303,11 @@ public class Main {
         //runBasicBranchAndBoundWHeuristic(branchBoundDFSAdvanced, outputManagerBB, results);
         //runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic, outputManagerBB, results);
 
-        /*
+        BeamSearch beamSearchNoH = new BeamSearch(testDataTiny, 100000, false, false);
+        beamSearchNoH.find();
         OutputManager outputManagerBB = new OutputManager(lessonsPerDayFull, daysFull, "outputBB.html");
-        BranchBoundDFS branchBoundDFSBasic = new BranchBoundDFS(testDataTiny, 120, 100000, true, true, false);
+        BranchBoundDFS branchBoundDFSBasic = new BranchBoundDFS(testDataTiny, 120, true, true, false, beamSearchNoH);
         runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic,outputManagerBB, results);
-         */
 
 
 

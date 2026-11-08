@@ -22,7 +22,6 @@ public class BeamSearch implements Search{
         heap = new Heap(false);
 
         keptStates = new ArrayList<>();
-        keptStates.add(initialState);
 
         this.lessonInstances = data.lessonInstances();
         this.beamWidth = beamWidth;
@@ -35,6 +34,7 @@ public class BeamSearch implements Search{
         childGenerator.reset();
         heap.clear();
         keptStates.clear();
+        keptStates.add(initialState);
 
         while (index < lessonInstances.size()) {
             System.out.println("cannotPlaceCount: " + childGenerator.cannotPlaceCount);

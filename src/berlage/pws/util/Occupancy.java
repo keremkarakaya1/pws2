@@ -5,23 +5,21 @@ import berlage.pws.model.*;
 import java.util.Arrays;
 
 public class Occupancy {
-    private final boolean[][] teacherOccupied;
+    private final int[][] teacherOccupied;
     private final int[][] roomOccupied;
     private final int[][] studentOccupied;
     private final int[][] countAssigned;
     private final int maxCountPerDay;
-    private final int lessonsPerDay;
     private ScheduleState loadedState;
 
     public Occupancy(int teacherCount, int roomCount, int studentCount, int lessonsPerDay, int days, int maxCountPerDay, int groupCount) {
-        teacherOccupied = new boolean[teacherCount][days * lessonsPerDay];
+        teacherOccupied = new int[teacherCount][days];
         roomOccupied = new int[roomCount][days];
         studentOccupied = new int[studentCount][days];
         countAssigned = new int[groupCount][days];
 
         loadedState = null;
         this.maxCountPerDay = maxCountPerDay;
-        this.lessonsPerDay = lessonsPerDay;
     }
 
     public int getLessonCountOfStudentOnDay(int id, int day) {
@@ -49,12 +47,13 @@ public class Occupancy {
         int change = place ? 1 : -1;
         int bitChange = 1 << period;
 
-        teacherOccupied[teacher.getId()][flatIndex] = place;
         countAssigned[group.getId()][day] += change;
 
         if (place) {
+            teacherOccupied[teacher.getId()][day] |= bitChange;
             roomOccupied[room.getId()][day] |= bitChange;
         } else {
+            teacherOccupied[teacher.getId()][day] &= ~bitChange;
             roomOccupied[room.getId()][day] &= ~bitChange;
         }
 
@@ -92,11 +91,13 @@ public class Occupancy {
     }
 
     public boolean isTeacherBusy(Teacher teacher, int day, int index) {
-        return teacherOccupied[teacher.getId()][day * lessonsPerDay + index];
+        int dayBits = teacherOccupied[teacher.getId()][day];
+        return (dayBits & (1 << index)) != 0;
     }
 
     public boolean isTeacherBusy(Teacher teacher, Slot slot) {
-        return teacherOccupied[teacher.getId()][slot.getFlatIndex()];
+        int dayBits = teacherOccupied[teacher.getId()][slot.getDay()];
+        return (dayBits & (1 << slot.getPeriod())) != 0;
     }
 
     public boolean isRoomBusy(Room room, Slot slot) {
@@ -178,7 +179,7 @@ public class Occupancy {
 
     private void clear() {
         for (int i = 0; i < teacherOccupied.length; i++) {
-            Arrays.fill(teacherOccupied[i], false);
+            Arrays.fill(teacherOccupied[i], 0);
         }
 
         for (int i = 0; i < roomOccupied.length; i++) {

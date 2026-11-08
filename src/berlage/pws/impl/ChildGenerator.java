@@ -84,33 +84,33 @@ public class ChildGenerator {
 
         stateList.clear();
         occupancy.buildFullState(state);
-        fillPerStudentGapCount();
 
         int index = state.getIndex();
+        SubjectGroup group = lessonInstances.get(index);
+        SubjectGroup previous = index == 0 ? null : lessonInstances.get(index - 1);
+        RoomType requiredType = group.getTeacher().getTypeRequirement();
+
+        int allowedFromIndex = -1;
         int parentHCost = 0;
         int oldGroupContribution = 0;
 
-        if (heuristic && !advanced) {
-            SubjectGroup groupToPlace = lessonInstances.get(index);
+        if (heuristic) {
+            if (state.getPlacedLesson() == null) {
+                fillPerStudentGapCount(students);
+                parentHCost = CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight;
+            } else {
+                fillPerStudentGapCount(group.getStudents());
+                parentHCost = state.getHCost();
+            }
 
-            parentHCost = state.getPlacedLesson() == null
-                    ? CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight
-                    : state.getHCost();
-
-            oldGroupContribution = CostManager.getOldContribution(groupToPlace, lessonsLeft, perStudentGapCount, index);
+            oldGroupContribution = CostManager.getOldContribution(group, lessonsLeft, perStudentGapCount, index);
         }
-
-        SubjectGroup previous = index == 0 ? null : lessonInstances.get(index - 1);
-        int allowedFromIndex = -1;
 
         if (previous == lessonInstances.get(index)) {
             ScheduledLesson lesson = state.getPlacedLesson();
             Slot slot = lesson.getSlot();
             allowedFromIndex = slot.getFlatIndex();
         }
-
-        SubjectGroup group = lessonInstances.get(index);
-        RoomType requiredType = group.getTeacher().getTypeRequirement();
 
         for (Slot slot : slots) {
             if (slot.getFlatIndex() <= allowedFromIndex) {
@@ -135,27 +135,14 @@ public class ChildGenerator {
             int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson);
 
             if (heuristic) {
-                if (advanced) {
-                    hCost = CostManager.calculateAdvancedHCost(occupancy,
-                                                            scheduledLesson,
-                                                            students,
-                                                            subjectGroupsPerStudent,
-                                                            countGroupsToBeScheduled,
-                                                            lessonsLeft,
-                                                            perStudentGapCount,
-                                                            index + 1,
-                                                            days,
-                                                            weight);
-                } else {
-                    hCost = CostManager.calculateHCost(occupancy,
-                                                    scheduledLesson,
-                                                    lessonsLeft,
-                                                    perStudentGapCount,
-                                                    index,
-                                                    parentHCost,
-                                                    oldGroupContribution,
-                                                    weight);
-                }
+                hCost = CostManager.calculateHCost(occupancy,
+                                                scheduledLesson,
+                                                lessonsLeft,
+                                                perStudentGapCount,
+                                                index,
+                                                parentHCost,
+                                                oldGroupContribution,
+                                                weight);
             }
 
 
@@ -172,7 +159,7 @@ public class ChildGenerator {
         return stateList;
     }
 
-    private void fillPerStudentGapCount() {
+    private void fillPerStudentGapCount(int[] students) {
         for (int id : students) {
             int gapCount = 0;
 
