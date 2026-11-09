@@ -14,7 +14,6 @@ public record TestData(
         List<SubjectGroup> lessonInstances,
         List<List<SubjectGroup>> subjectGroupsPerStudent,
         Slot[] slots,
-        int[][][] studentFillableGaps,
         int[][] countGroupsToBeScheduledAtIndex,
         int[][] lessonsLeft,
         int groupCount,

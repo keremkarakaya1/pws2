@@ -13,7 +13,6 @@ public class ChildGenerator {
     private final List<List<SubjectGroup>> subjectGroupsPerStudent;
     private final Map<RoomType, Room[]> roomMap;
     private final List<ScheduleState> stateList;
-    private final int[][][] studentFillableTable;
     private final int[][][] placementIds;
     private final int[][] lessonsLeft;
     private final int[][] countGroupsToBeScheduled;
@@ -23,15 +22,16 @@ public class ChildGenerator {
     private ScheduledLesson[] placements;
     private final int days;
     private final boolean heuristic;
+    private final boolean advanced;
     private final int weight;
     int cannotPlaceCount = 0;
 
     public ChildGenerator(TestData data, boolean heuristic, boolean advanced, int weight) {
         days = data.days();
         roomMap = data.roomMap();
-        this.studentFillableTable = data.studentFillableGaps();
         this.lessonInstances = data.lessonInstances();
         this.heuristic = heuristic;
+        this.advanced = advanced;
         this.weight = weight;
         this.slots = data.slots();
         lessonsLeft = data.lessonsLeft();
@@ -96,10 +96,10 @@ public class ChildGenerator {
 
         if (heuristic) {
             if (state.getPlacedLesson() == null) {
-                fillPerStudentGapCount(students, index);
+                fillPerStudentGapCount(students);
                 parentHCost = CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight;
             } else {
-                fillPerStudentGapCount(group.getStudents(), index);
+                fillPerStudentGapCount(group.getStudents());
                 parentHCost = state.getHCost();
             }
 
@@ -136,15 +136,13 @@ public class ChildGenerator {
 
             if (heuristic) {
                 hCost = CostManager.calculateHCost(occupancy,
-                        scheduledLesson,
-                        lessonsLeft,
-                        studentFillableTable,
-                        perStudentGapCount,
-                        index,
-                        parentHCost,
-                        oldGroupContribution,
-                        weight,
-                        days);
+                                                scheduledLesson,
+                                                lessonsLeft,
+                                                perStudentGapCount,
+                                                index,
+                                                parentHCost,
+                                                oldGroupContribution,
+                                                weight);
             }
 
 
@@ -161,9 +159,24 @@ public class ChildGenerator {
         return stateList;
     }
 
-    private void fillPerStudentGapCount(int[] ids, int index) {
-        for (int id : ids) {
-            perStudentGapCount[id] = CostManager.getFillableGapCount(occupancy, studentFillableTable[id][index], id, days);
+    private void fillPerStudentGapCount(int[] students) {
+        for (int id : students) {
+            int gapCount = 0;
+
+            for (int i = 0; i < days; i++) {
+                int lessonCount = occupancy.getLessonCountOfStudentOnDay(id, i);
+
+                if (lessonCount == 0) {
+                    continue;
+                }
+
+                int firstPeriod = occupancy.getFirstOccupiedPeriod(id, i);
+                int lastPeriod = occupancy.getLastOccupiedPeriod(id, i);
+
+                gapCount += lastPeriod - firstPeriod + 1 - lessonCount;
+            }
+
+            perStudentGapCount[id] = gapCount;
         }
     }
 

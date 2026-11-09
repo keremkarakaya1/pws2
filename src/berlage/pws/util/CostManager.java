@@ -2,7 +2,6 @@ package berlage.pws.util;
 
 import berlage.pws.model.*;
 
-import java.util.Arrays;
 import java.util.List;
 
 public final class CostManager {
@@ -39,69 +38,114 @@ public final class CostManager {
     }
 
 
-    public static int countFillableGaps(int dayBits, int fillableRow) {
-        if (dayBits == 0) {
-            return 0;
+    public static int calculateAdvancedHCost(Occupancy occupancy,
+                                             ScheduledLesson lesson,
+                                             int[] students,
+                                             List<List<SubjectGroup>> subjectGroupsPerStudent,
+                                             int[][] countGroupsToBeScheduledAtIndex,
+                                             int[][] remainingLessonTable,
+                                             int[] studentGapCount,
+                                             int index,
+                                             int days,
+                                             int weight) {
+
+
+
+        int[] updatedStudentGapCounts = studentGapCount.clone();
+        SubjectGroup group = lesson.getGroup();
+        Slot slot = lesson.getSlot();
+        int dayIndex = slot.getDay();
+        int newPeriod = slot.getPeriod();
+        int cost = 0;
+
+        for (int id : group.getStudents()) {
+            int gapChange = 0;
+
+            if (occupancy.getLessonCountOfStudentOnDay(id, dayIndex) != 0) {
+                gapChange = getHeuristicGapChange(id, occupancy, newPeriod, dayIndex);
+                updatedStudentGapCounts[id] += gapChange;
+            }
         }
 
-        int first = Integer.numberOfTrailingZeros(dayBits);
-        int last = 31 - Integer.numberOfLeadingZeros(dayBits);
-        int span = (-1 << first) & (-1 >>> (31 - last));
-        int gaps = span & ~dayBits;
+        occupancy.updateOccupancy(lesson, true);
 
-        return Integer.bitCount(gaps & fillableRow);
-    }
+        for (int id : students) {
+            int gapCountBefore = updatedStudentGapCounts[id];
+            int lessonsLeft = remainingLessonTable[id][index];
 
-    public static int getFillableGapCount(Occupancy occupancy, int[] fillableRows, int id, int days) {
-        int count = 0;
+            for (int i = 0; i < days; i++) {
+                if (occupancy.getLessonCountOfStudentOnDay(id,i) == 0) {
+                    continue;
+                }
 
-        for (int day = 0; day < days; day++) {
-            count += countFillableGaps(occupancy.getStudentDayBits(id, day), fillableRows[day]);
+                int firstOccupiedPeriod = occupancy.getFirstOccupiedPeriod(id,i);
+                int lastOccupiedPeriod = occupancy.getLastOccupiedPeriod(id,i);
+                int dayBits = occupancy.getStudentScheduleOnDay(id, i);
+
+                for (int j = firstOccupiedPeriod; j < lastOccupiedPeriod; j++) {
+                    if ((dayBits & (1 << j)) != 0) {
+                        continue;
+                    }
+
+                    List<SubjectGroup> groupsOfStudent = subjectGroupsPerStudent.get(id);
+                    boolean found = false;
+
+                    for (SubjectGroup subjectGroup : groupsOfStudent) {
+                        Teacher teacher = subjectGroup.getTeacher();
+
+                        if (countGroupsToBeScheduledAtIndex[subjectGroup.getId()][index] > 0 &&
+                            !occupancy.isTeacherBusy(teacher, i, j) &&
+                            teacher.isAvailable(i,j)) {
+
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        gapCountBefore--;
+                    }
+                }
+            }
+
+            int forcedGapCount = Math.max(0, lessonsLeft - gapCountBefore);
+            cost += forcedGapCount * GAP_WEIGHT;
         }
 
-        return count;
+        occupancy.updateOccupancy(lesson, false);
+        return cost * weight;
     }
 
     public static int calculateHCost(Occupancy occupancy,
                                      ScheduledLesson lesson,
                                      int[][] remainingLessonTable,
-                                     int[][][] fillableTable,
-                                     int[] studentFillableCount,
+                                     int[] studentGapCount,
                                      int parentIndex,
                                      int parentHCost,
                                      int oldGroupContribution,
-                                     int weight,
-                                     int days) {
-        int placedDay = lesson.getSlot().getDay();
-        int placedBit = 1 << lesson.getSlot().getPeriod();
+                                     int weight) {
+
+
+        SubjectGroup group = lesson.getGroup();
+        Slot slot = lesson.getSlot();
+        int dayIndex = slot.getDay();
+        int newPeriod = slot.getPeriod();
         int childIndex = parentIndex + 1;
         int newHCost = 0;
 
-        for (int id : lesson.getGroup().getStudents()) {
-            int[] parentRows = fillableTable[id][parentIndex];
-            int[] childRows = fillableTable[id][childIndex];
-            int fillable;
+        for (int id : group.getStudents()) {
+            int gapCountBefore = studentGapCount[id];
+            int gapChange = 0;
 
-            if (Arrays.equals(parentRows, childRows)) {
-                int bits = occupancy.getStudentDayBits(id, placedDay);
-                fillable = studentFillableCount[id]
-                           - countFillableGaps(bits, parentRows[placedDay])
-                           + countFillableGaps(bits | placedBit, parentRows[placedDay]);
-            } else {
-                fillable = 0;
 
-                for (int day = 0; day < days; day++) {
-                    int bits = occupancy.getStudentDayBits(id, day);
-
-                    if (day == placedDay) {
-                        bits |= placedBit;
-                    }
-
-                    fillable += countFillableGaps(bits, childRows[day]);
-                }
+            if (occupancy.getLessonCountOfStudentOnDay(id, dayIndex) != 0) {
+                gapChange = getHeuristicGapChange(id, occupancy, newPeriod, dayIndex);
             }
 
-            newHCost += Math.max(0, remainingLessonTable[id][childIndex] - fillable) * GAP_WEIGHT;
+            int lessonsLeft = remainingLessonTable[id][childIndex];
+            int countLessonsForcedToExtendDay = Math.max(0, lessonsLeft - (gapCountBefore + gapChange));
+
+            newHCost += countLessonsForcedToExtendDay * GAP_WEIGHT;
         }
 
         return parentHCost + (newHCost - oldGroupContribution) * weight;
@@ -146,6 +190,18 @@ public final class CostManager {
         }
 
         return cost;
+    }
+
+    private static int getHeuristicGapChange(int id, Occupancy occupancy,int newPeriod, int dayIndex) {
+        int firstPeriod = occupancy.getFirstOccupiedPeriod(id, dayIndex);
+        int lastPeriod = occupancy.getLastOccupiedPeriod(id, dayIndex);
+
+        int newFirst = Math.min(firstPeriod, newPeriod);
+        int newLast = Math.max(lastPeriod, newPeriod);
+
+        int gapChange = ((newLast - newFirst) - (lastPeriod - firstPeriod)) - 1;
+
+        return gapChange;
     }
 
     public static int getOldContribution(SubjectGroup group, int[][] remainingLessonTable, int[] studentGapCount, int index) {
