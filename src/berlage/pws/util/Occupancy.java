@@ -110,6 +110,15 @@ public class Occupancy {
         return (dayBits & (1 << slot.getPeriod())) != 0;
     }
 
+    public boolean isStudentBusy(int id, int day, int period) {
+        int dayBits = studentOccupied[id][day];
+        return (dayBits & (1 << period)) != 0;
+    }
+
+    public int getStudentDayBits(int id, int day) {
+        return studentOccupied[id][day];
+    }
+
     public boolean canPlace(SubjectGroup group, Slot slot) {
         Teacher teacher = group.getTeacher();
 

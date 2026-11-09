@@ -303,11 +303,11 @@ public class Main {
         //runBasicBranchAndBoundWHeuristic(branchBoundDFSAdvanced, outputManagerBB, results);
         //runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic, outputManagerBB, results);
 
-        BeamSearch beamSearchNoH = new BeamSearch(testDataTiny, 100000, false, false);
-        beamSearchNoH.find();
-        OutputManager outputManagerBB = new OutputManager(lessonsPerDayFull, daysFull, "outputBB.html");
-        BranchBoundDFS branchBoundDFSBasic = new BranchBoundDFS(testDataTiny, 120, true, true, false, beamSearchNoH);
-        runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic,outputManagerBB, results);
+        //BeamSearch beamSearchNoH = new BeamSearch(testDataTiny, 100000, false, false);
+        //beamSearchNoH.find();
+        //OutputManager outputManagerBB = new OutputManager(lessonsPerDayFull, daysFull, "outputBB.html");
+        //BranchBoundDFS branchBoundDFSBasic = new BranchBoundDFS(testDataTiny, 120, true, true, false, beamSearchNoH);
+        //runBasicBranchAndBoundWHeuristic(branchBoundDFSBasic,outputManagerBB, results);
 
 
 

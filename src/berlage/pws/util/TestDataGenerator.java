@@ -87,6 +87,7 @@ public class TestDataGenerator {
 
         List<SubjectGroup> lessonInstances = LessonInstanceBuilder.build(countPerRoomType, subjectGroups, requiredPerWeek);
         List<List<SubjectGroup>> subjectGroupsPerStudent = getSubjectGroupsPerStudent(students.size(), lessonInstances);
+        int[][][] studentFillableGaps = getStudentFillableGaps(lessonInstances, students);
         int[][] countGroupsToBeScheduledAtIndex = getCountGroupsToBeScheduled(groupCount, lessonInstances);
         int[][] lessonsLeft = createLessonCountTable(lessonInstances, students);
 
@@ -100,6 +101,7 @@ public class TestDataGenerator {
                 lessonInstances,
                 subjectGroupsPerStudent,
                 slots,
+                studentFillableGaps,
                 countGroupsToBeScheduledAtIndex,
                 lessonsLeft,
                 groupCount,
@@ -116,6 +118,37 @@ public class TestDataGenerator {
 
         for (RoomType type : RoomType.values()) {
             result.put(type, roomMap.get(type).length);
+        }
+
+        return result;
+    }
+
+    private int[][][] getStudentFillableGaps(List<SubjectGroup> lessonInstances, Set<Student> students) {
+        int[][][] result = new int[students.size()][lessonInstances.size() + 1][days];
+
+        for (int position = lessonInstances.size() - 1; position >= 0; position--) {
+            SubjectGroup group = lessonInstances.get(position);
+            Teacher teacher = group.getTeacher();
+            int[] teacherRows = new int[days];
+
+            for (int day = 0; day < days; day++) {
+                for (int period = 0; period < lessonsPerDay; period++) {
+                    if (teacher.isAvailable(day, period)) {
+                        teacherRows[day] |= 1 << period;
+                    }
+                }
+            }
+
+            for (Student student : students) {
+                int id = student.getId();
+                System.arraycopy(result[id][position + 1], 0, result[id][position], 0, days);
+            }
+
+            for (int id : group.getStudents()) {
+                for (int day = 0; day < days; day++) {
+                    result[id][position][day] |= teacherRows[day];
+                }
+            }
         }
 
         return result;
