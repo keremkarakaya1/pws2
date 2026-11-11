@@ -11,6 +11,7 @@ public record TestData(
         Set<Student> students,
         Map<Subject, Set<SubjectGroup>> subjectGroups,
         Map<Subject, Integer> requiredPerWeek,
+        Map<Teacher, int[]> studentsOfTeacherMap,
         List<SubjectGroup> lessonInstances,
         List<List<SubjectGroup>> subjectGroupsPerStudent,
         Slot[] slots,

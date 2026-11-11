@@ -12,6 +12,7 @@ public class ChildGenerator {
     private final List<SubjectGroup> lessonInstances;
     private final List<List<SubjectGroup>> subjectGroupsPerStudent;
     private final Map<RoomType, Room[]> roomMap;
+    private final Map<Teacher, int[]> studentsOfTeacherMap;
     private final List<ScheduleState> stateList;
     private final int[][][] placementIds;
     private final int[][] lessonsLeft;
@@ -48,6 +49,7 @@ public class ChildGenerator {
 
         subjectGroupsPerStudent = data.subjectGroupsPerStudent();
         countGroupsToBeScheduled = data.countGroupsToBeScheduledAtIndex();
+        studentsOfTeacherMap = data.studentsOfTeacherMap();
         students = new int[data.students().size()];
         perStudentGapCount = new int[students.length];
         stateList = new ArrayList<>();
@@ -87,6 +89,7 @@ public class ChildGenerator {
 
         int index = state.getIndex();
         SubjectGroup group = lessonInstances.get(index);
+        int[] teacherStudents = studentsOfTeacherMap.get(group.getTeacher());
         SubjectGroup previous = index == 0 ? null : lessonInstances.get(index - 1);
         RoomType requiredType = group.getTeacher().getTypeRequirement();
 
@@ -97,21 +100,28 @@ public class ChildGenerator {
         if (heuristic) {
             boolean isRoot = state.getPlacedLesson() == null;
 
-            if (advanced || isRoot) {
+            if (isRoot) {
                 fillPerStudentGapCount(students);
+            } else if (advanced) {
+                fillPerStudentGapCount(teacherStudents);
             } else {
                 fillPerStudentGapCount(group.getStudents());
             }
 
-            if (!advanced) {
-                parentHCost = isRoot
-                        ? CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight
-                        : state.getHCost();
+            parentHCost = isRoot
+                    ? CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight
+                    : state.getHCost();
 
+            if (advanced) {
+                oldGroupContribution = CostManager.getOldAdvancedContribution(occupancy, teacherStudents,
+                        subjectGroupsPerStudent, countGroupsToBeScheduled, lessonsLeft,
+                        perStudentGapCount, index, days);
+            } else {
                 oldGroupContribution = CostManager.getOldContribution(group, lessonsLeft, perStudentGapCount, index);
             }
+
         }
-        
+
         if (previous == lessonInstances.get(index)) {
             ScheduledLesson lesson = state.getPlacedLesson();
             Slot slot = lesson.getSlot();
@@ -144,14 +154,16 @@ public class ChildGenerator {
                 if (advanced) {
                     hCost = CostManager.calculateAdvancedHCost(occupancy,
                             scheduledLesson,
-                            students,
                             subjectGroupsPerStudent,
                             countGroupsToBeScheduled,
                             lessonsLeft,
                             perStudentGapCount,
+                            teacherStudents,
                             index + 1,
                             days,
-                            weight);
+                            weight,
+                            parentHCost,
+                            oldGroupContribution);
                 } else {
                     hCost = CostManager.calculateHCost(occupancy,
                             scheduledLesson,

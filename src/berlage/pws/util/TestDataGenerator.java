@@ -85,6 +85,7 @@ public class TestDataGenerator {
             groupCount += set.size();
         }
 
+        Map<Teacher, int[]> studentsOfTeacherMap = getConvertedTeacherStudentIdMap(getTeacherStudentIdMap(subjectGroups));
         List<SubjectGroup> lessonInstances = LessonInstanceBuilder.build(countPerRoomType, subjectGroups, requiredPerWeek);
         List<List<SubjectGroup>> subjectGroupsPerStudent = getSubjectGroupsPerStudent(students.size(), lessonInstances);
         int[][] countGroupsToBeScheduledAtIndex = getCountGroupsToBeScheduled(groupCount, lessonInstances);
@@ -97,6 +98,7 @@ public class TestDataGenerator {
                 students,
                 subjectGroups,
                 requiredPerWeek,
+                studentsOfTeacherMap,
                 lessonInstances,
                 subjectGroupsPerStudent,
                 slots,
@@ -110,6 +112,39 @@ public class TestDataGenerator {
                 maxCountSubjectPerDay);
     }
 
+
+    private Map<Teacher, List<Integer>> getTeacherStudentIdMap(Map<Subject, Set<SubjectGroup>> subjectGroups) {
+        Map<Teacher, List<Integer>> teacherStudentIdMap = new HashMap<>();
+
+        for (Set<SubjectGroup> groups : subjectGroups.values()) {
+            for (SubjectGroup group : groups) {
+                Teacher teacher = group.getTeacher();
+                teacherStudentIdMap.putIfAbsent(teacher, new ArrayList<>());
+
+                for (int student : group.getStudents()) {
+                    teacherStudentIdMap.get(teacher).add(student);
+                }
+            }
+        }
+
+        return teacherStudentIdMap;
+    }
+
+    private Map<Teacher, int[]> getConvertedTeacherStudentIdMap(Map<Teacher, List<Integer>> map) {
+        Map<Teacher, int[]> result = new HashMap<>();
+
+        for (Map.Entry<Teacher, List<Integer>> entry : map.entrySet()) {
+            List<Integer> list = entry.getValue();
+            result.put(entry.getKey(), new int[list.size()]);
+            int[] arr = result.get(entry.getKey());
+
+            for (int i = 0; i < arr.length; i++) {
+                arr[i] = list.get(i);
+            }
+        }
+
+        return result;
+    }
 
     private Map<RoomType, Integer> getCountPerRoomType() {
         Map<RoomType, Integer> result = new EnumMap<>(RoomType.class);
