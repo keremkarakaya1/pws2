@@ -95,17 +95,23 @@ public class ChildGenerator {
         int oldGroupContribution = 0;
 
         if (heuristic) {
-            if (state.getPlacedLesson() == null) {
+            boolean isRoot = state.getPlacedLesson() == null;
+
+            if (advanced || isRoot) {
                 fillPerStudentGapCount(students);
-                parentHCost = CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight;
             } else {
                 fillPerStudentGapCount(group.getStudents());
-                parentHCost = state.getHCost();
             }
 
-            oldGroupContribution = CostManager.getOldContribution(group, lessonsLeft, perStudentGapCount, index);
-        }
+            if (!advanced) {
+                parentHCost = isRoot
+                        ? CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight
+                        : state.getHCost();
 
+                oldGroupContribution = CostManager.getOldContribution(group, lessonsLeft, perStudentGapCount, index);
+            }
+        }
+        
         if (previous == lessonInstances.get(index)) {
             ScheduledLesson lesson = state.getPlacedLesson();
             Slot slot = lesson.getSlot();
@@ -135,14 +141,27 @@ public class ChildGenerator {
             int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson);
 
             if (heuristic) {
-                hCost = CostManager.calculateHCost(occupancy,
-                                                scheduledLesson,
-                                                lessonsLeft,
-                                                perStudentGapCount,
-                                                index,
-                                                parentHCost,
-                                                oldGroupContribution,
-                                                weight);
+                if (advanced) {
+                    hCost = CostManager.calculateAdvancedHCost(occupancy,
+                            scheduledLesson,
+                            students,
+                            subjectGroupsPerStudent,
+                            countGroupsToBeScheduled,
+                            lessonsLeft,
+                            perStudentGapCount,
+                            index + 1,
+                            days,
+                            weight);
+                } else {
+                    hCost = CostManager.calculateHCost(occupancy,
+                            scheduledLesson,
+                            lessonsLeft,
+                            perStudentGapCount,
+                            index,
+                            parentHCost,
+                            oldGroupContribution,
+                            weight);
+                }
             }
 
 

@@ -8,20 +8,18 @@ import java.util.*;
 
 public class Main {
 
-    //TODO testing -> new method in childgen new vars pathfinder ->
-
     private static void warmUp(TestData data) {
         boolean[][] settings = {
                 //{false, false},   // heuristic, advanced
                 {true, false},
-                {true, true}
+                {true, false}
         };
 
         int warmUps = 3;
 
         for (int w = 0; w < warmUps; w++) {
             for (boolean[] s : settings) {
-                new PathFinder(data, s[0], false, s[1]).find();
+                new PathFinder(data, s[0], false, s[1], 1).find();
             }
         }
 

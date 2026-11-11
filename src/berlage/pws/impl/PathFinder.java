@@ -21,15 +21,15 @@ public class PathFinder implements Search {
     private final int theoreticalBest;
     private int lowerBound;
 
-    public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced) {
-        this(data, heuristic, depthBased, advanced, 1, null);
+    public PathFinder(TestData data, boolean heuristic, boolean advanced, boolean depthBased) {
+        this(data, heuristic, advanced, depthBased, 1, null);
     }
 
-    public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced, int weight) {
-        this(data, heuristic, depthBased, advanced ,weight, null);
+    public PathFinder(TestData data, boolean heuristic, boolean advanced, boolean depthBased, int weight) {
+        this(data, heuristic, depthBased ,advanced, weight, null);
     }
 
-    public PathFinder(TestData data, boolean heuristic, boolean depthBased, boolean advanced,
+    public PathFinder(TestData data, boolean heuristic, boolean advanced, boolean depthBased,
                       int weight, Search algorithm) {
         openHeap = new Heap(depthBased);
         childGenerator = new ChildGenerator(data, heuristic, advanced, weight);
