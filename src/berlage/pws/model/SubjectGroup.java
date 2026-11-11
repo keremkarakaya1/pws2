@@ -8,20 +8,32 @@ public class SubjectGroup {
     private final Subject subject;
     private final Set<Student> set;
     private final int[] students;
+    private final boolean[] studentInGroup;
     private final int id;
 
-    public SubjectGroup(Teacher teacher, Subject subject, Set<Student> set, int id) {
+    public SubjectGroup(Teacher teacher, Subject subject, Set<Student> set, Set<Student> allStudents, int id) {
         this.teacher = teacher;
         this.subject = subject;
         this.set = set;
         this.id = id;
 
         students = new int[set.size()];
+        studentInGroup = new boolean[allStudents.size()];
         int index = 0;
 
         for (Student student : set) {
             students[index++] = student.getId();
         }
+
+        for (Student student : allStudents) {
+            if (set.contains(student)) {
+                studentInGroup[student.getId()] = true;
+            }
+        }
+    }
+
+    public boolean isStudentInGroup(int id) {
+        return studentInGroup[id];
     }
 
     public Teacher getTeacher() {

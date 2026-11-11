@@ -43,18 +43,19 @@ public final class CostManager {
                                              int[][] countGroupsToBeScheduledAtIndex,
                                              int[][] remainingLessonTable,
                                              int[] studentGapCount,
-                                             int[] affectStudents,
+                                             int[] affectedStudents,
+                                             int[] contributionPerStudent,
                                              int index,
                                              int days,
                                              int weight,
-                                             int parentHCost,
-                                             int oldContribution) {
+                                             int parentHCost) {
 
 
 
         int[] updatedStudentGapCounts = studentGapCount.clone();
         SubjectGroup group = lesson.getGroup();
         Slot slot = lesson.getSlot();
+        int oldContribution = 0;
         int dayIndex = slot.getDay();
         int newPeriod = slot.getPeriod();
         int cost = 0;
@@ -70,7 +71,17 @@ public final class CostManager {
 
         occupancy.updateOccupancy(lesson, true);
 
-        for (int id : affectStudents) {
+        for (int id : affectedStudents) {
+            if (!group.isStudentInGroup(id)
+                && (occupancy.getLessonCountOfStudentOnDay(id, dayIndex) == 0
+                    || occupancy.isStudentBusy(id, slot)
+                    || newPeriod < occupancy.getFirstOccupiedPeriod(id, dayIndex)
+                    || newPeriod > occupancy.getLastOccupiedPeriod(id, dayIndex))) {
+                continue;
+            }
+
+            oldContribution += contributionPerStudent[id];
+
             cost += calculateStudentForcedGapCost(occupancy,
                                                     id,
                                                     updatedStudentGapCounts[id],
@@ -85,23 +96,21 @@ public final class CostManager {
         return parentHCost + (cost - oldContribution) * weight;
     }
 
-    public static int getOldAdvancedContribution(Occupancy occupancy,
+    public static void getOldAdvancedContribution(Occupancy occupancy,
                                                  int[] affectedStudents,
                                                  List<List<SubjectGroup>> subjectGroupsPerStudent,
                                                  int[][] countGroupsToBeScheduledAtIndex,
                                                  int[][] remainingLessonTable,
                                                  int[] studentGapCount,
+                                                 int[] contributionPerStudent,
                                                  int index,
                                                  int days) {
-        int cost = 0;
 
         for (int id : affectedStudents) {
-            cost += calculateStudentForcedGapCost(occupancy, id, studentGapCount[id],
+            contributionPerStudent[id] = calculateStudentForcedGapCost(occupancy, id, studentGapCount[id],
                     remainingLessonTable[id][index], subjectGroupsPerStudent,
                     countGroupsToBeScheduledAtIndex, index, days);
         }
-
-        return cost;
     }
 
     private static int calculateStudentForcedGapCost(Occupancy occupancy,

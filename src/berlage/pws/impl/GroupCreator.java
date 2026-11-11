@@ -110,7 +110,7 @@ public class GroupCreator {
                 teacherLoad.put(teacher, teacherLoad.getOrDefault(teacher, 0) + lessons);
                 pq.offer(teacher);
 
-                subjectGroups.add(new SubjectGroup(teacher, subject, group, id++));
+                subjectGroups.add(new SubjectGroup(teacher, subject, group, students,id++));
             }
 
             result.put(subject, subjectGroups);

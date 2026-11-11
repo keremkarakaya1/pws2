@@ -19,6 +19,7 @@ public class ChildGenerator {
     private final int[][] countGroupsToBeScheduled;
     private final int[] perStudentGapCount;
     private final int[] students;
+    private final int[] contributionPerStudent;
     private final Slot[] slots;
     private ScheduledLesson[] placements;
     private final int days;
@@ -52,6 +53,7 @@ public class ChildGenerator {
         studentsOfTeacherMap = data.studentsOfTeacherMap();
         students = new int[data.students().size()];
         perStudentGapCount = new int[students.length];
+        contributionPerStudent = new int[students.length];
         stateList = new ArrayList<>();
 
         int placementId = 0;
@@ -113,9 +115,9 @@ public class ChildGenerator {
                     : state.getHCost();
 
             if (advanced) {
-                oldGroupContribution = CostManager.getOldAdvancedContribution(occupancy, teacherStudents,
+                CostManager.getOldAdvancedContribution(occupancy, teacherStudents,
                         subjectGroupsPerStudent, countGroupsToBeScheduled, lessonsLeft,
-                        perStudentGapCount, index, days);
+                        perStudentGapCount, contributionPerStudent, index, days);
             } else {
                 oldGroupContribution = CostManager.getOldContribution(group, lessonsLeft, perStudentGapCount, index);
             }
@@ -159,11 +161,11 @@ public class ChildGenerator {
                             lessonsLeft,
                             perStudentGapCount,
                             teacherStudents,
+                            contributionPerStudent,
                             index + 1,
                             days,
                             weight,
-                            parentHCost,
-                            oldGroupContribution);
+                            parentHCost);
                 } else {
                     hCost = CostManager.calculateHCost(occupancy,
                             scheduledLesson,
