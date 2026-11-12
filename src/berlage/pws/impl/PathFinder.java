@@ -25,20 +25,26 @@ public class PathFinder implements Search {
         this(data, heuristic, advanced, depthBased, 1, null);
     }
 
-    public PathFinder(TestData data, boolean heuristic, boolean advanced, boolean depthBased, int weight) {
-        this(data, heuristic, depthBased ,advanced, weight, null);
+    public PathFinder(TestData data, boolean heuristic, boolean advanced, boolean depthBased, double weight) {
+        this(data, heuristic, advanced ,depthBased, weight, null);
     }
 
     public PathFinder(TestData data, boolean heuristic, boolean advanced, boolean depthBased,
-                      int weight, Search algorithm) {
+                      double weight, Search algorithm) {
+        if (weight < 1) {
+            throw new IllegalArgumentException("PathFinder weight may not be less than 1");
+        }
+
+        this.weight = CostManager.convertWeight(weight);
+
         openHeap = new Heap(depthBased);
-        childGenerator = new ChildGenerator(data, heuristic, advanced, weight);
+        childGenerator = new ChildGenerator(data, heuristic, advanced, this.weight);
         initialState = new ScheduleState(null, null, 0, 0, 0);
-        tracker = new BoundTracker(data.lessonInstances(), weight);
+        tracker = new BoundTracker(data.lessonInstances(), this.weight);
 
         theoreticalBest = CostManager.getTheoreticalBest(data.lessonInstances());
         this.lessonInstances = childGenerator.getLessonInstances();
-        this.weight = weight;
+
 
         if (algorithm != null) {
             beamSeed = algorithm.findOrDefault(null);
@@ -84,7 +90,7 @@ public class PathFinder implements Search {
 
                 //System.out.println(state.getPlacedLesson().getGroup());
                 //System.out.println(state.getPlacedLesson().getRoom().getType());
-                System.out.println("cost: " + state.getTotalCost());
+                System.out.println("cost: " + state.getTotalCost() / (double)CostManager.SCALE_FACTOR);
                 System.out.println("cannotPlaceCount: " + childGenerator.cannotPlaceCount);
                 System.out.println("HEAP size: " + openHeap.size());
                 //System.out.println("closedSet: " + closedSet.size());
@@ -98,7 +104,7 @@ public class PathFinder implements Search {
             for (int i = 0; i < childStates.size(); i++) {
                 ScheduleState childState = childStates.get(i);
 
-                if (childState.getGCost() + childState.getHCost() / weight >= beamBest) {
+                if (childState.getGCost() + childState.getHCost() / weight * CostManager.SCALE_FACTOR >= beamBest) {
                     continue;
                 }
 
@@ -110,7 +116,7 @@ public class PathFinder implements Search {
                 System.out.println("Poll Count: " + pollCount);
                 System.out.println("Heap Size: " + openHeap.size());
                 bound = tracker.getBound();
-                System.out.println("BOUND: " + bound);
+                System.out.println("BOUND: " + bound / (double) CostManager.SCALE_FACTOR);
                 //System.out.println(closedSet.size());
             }
         }
@@ -120,7 +126,7 @@ public class PathFinder implements Search {
         }
 
         printGoalStatistics(beamSeed, maxHeapSize, pollCount, maxDepth);
-        System.out.println("OPTIMAL SCHEDULE FOUND BY SEED: " + beamSeed.getTotalCost());
+        System.out.println("OPTIMAL SCHEDULE FOUND BY SEED: " + beamSeed.getTotalCost() / (double) CostManager.SCALE_FACTOR);
         return beamSeed;
     }
 
@@ -137,8 +143,9 @@ public class PathFinder implements Search {
 
         int found = state.getTotalCost();
         bound = tracker.getBound();
-        lowerBound = Math.min(found, Math.max(bound, Math.max(theoreticalBest, found / weight)));
-        System.out.println("BOUND: " + lowerBound + " (found cost " + found + ")");
+        int weightedFloor = (int) ((long) found * CostManager.SCALE_FACTOR / weight);
+        lowerBound = Math.min(found, Math.max(bound, Math.max(theoreticalBest, weightedFloor)));
+        System.out.println("BOUND: " + lowerBound / (double) CostManager.SCALE_FACTOR + " (found cost " + found / (double)CostManager.SCALE_FACTOR + ")");
         System.out.println(lessonInstances.size());
     }
 }

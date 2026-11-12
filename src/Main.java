@@ -341,8 +341,8 @@ public class Main {
             System.out.println();
             System.out.println(result.name());
             System.out.println("Average gap count: " + result.averageGap());
-            System.out.println("Cost: " + result.cost());
-            System.out.println("Lower bound: " + result.lowerBound());
+            System.out.println("Cost: " + result.cost() / (double)CostManager.SCALE_FACTOR);
+            System.out.println("Lower bound: " + (result.lowerBound() < 0 ? -1 : result.lowerBound() / (double) CostManager.SCALE_FACTOR));
             System.out.println("runtimeMs: " + result.runtimeMilliseconds());
             System.out.println("runtimeSeconds: " + result.runtimeSeconds());
         }

@@ -18,8 +18,8 @@ public class BoundTracker {
     }
 
     public void track(ScheduleState state, boolean add) {
-        int cost = state.getGCost() + state.getHCost() / weight;
-        int index = (cost - offset) / CostManager.GAP_WEIGHT;
+        int cost = state.getGCost() + state.getHCost() / weight * CostManager.SCALE_FACTOR;
+        int index = (cost - offset) / (CostManager.GAP_WEIGHT * CostManager.SCALE_FACTOR);
 
         if (index < 0) {
             System.out.println("NEGATIVE INDEX");
@@ -40,8 +40,7 @@ public class BoundTracker {
     public int getBound() {
         for (int i = 0; i < counts.length; i++) {
             if (counts[i] > 0) {
-                return i * CostManager.GAP_WEIGHT + offset;
-            }
+                return i * CostManager.GAP_WEIGHT * CostManager.SCALE_FACTOR + offset;            }
         }
 
         return Integer.MAX_VALUE;

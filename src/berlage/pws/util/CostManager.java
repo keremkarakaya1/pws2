@@ -8,6 +8,7 @@ public final class CostManager {
     private static final int SPAN_WEIGHT = 0;
     private static final int SPREAD_WEIGHT = 0;
     public static final int GAP_WEIGHT = 10;
+    public static final int SCALE_FACTOR = 100;
 
     private CostManager() {}
 
@@ -16,7 +17,7 @@ public final class CostManager {
 
         for (SubjectGroup group : lessonsInstances) {
             int studentCount = group.getStudentsSet().size();
-            total += GAP_WEIGHT * studentCount;
+            total += GAP_WEIGHT * studentCount * SCALE_FACTOR;
         }
 
         return total;
@@ -211,7 +212,7 @@ public final class CostManager {
             int lessonCount = occupancy.getLessonCountOfStudentOnDay(id, dayIndex);
 
             if (lessonCount == 0) {
-                cost += GAP_WEIGHT;
+                cost += GAP_WEIGHT * SCALE_FACTOR;
                 continue;
             }
 
@@ -230,7 +231,7 @@ public final class CostManager {
                 gapCost += Math.max(firstPeriod - newFirst, newLast - lastPeriod);
             }
 
-            int weightedGapCost = gapCost * GAP_WEIGHT;
+            int weightedGapCost = gapCost * GAP_WEIGHT * SCALE_FACTOR;
 
             cost += weightedGapCost;
         }
@@ -259,5 +260,9 @@ public final class CostManager {
         }
 
         return cost;
+    }
+
+    public static int convertWeight(double weight) {
+        return (int)Math.round(weight * SCALE_FACTOR);
     }
 }

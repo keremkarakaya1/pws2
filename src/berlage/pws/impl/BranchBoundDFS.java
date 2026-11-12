@@ -36,7 +36,7 @@ public class BranchBoundDFS implements Search{
         }
 
         heap = new Heap(true);
-        childGenerator = new ChildGenerator(data, heuristic, advanced, 1);
+        childGenerator = new ChildGenerator(data, heuristic, advanced, 100);
         initialState = new ScheduleState(null, null, 0,0,0);
         seedState = seeded ? algorithm.findOrDefault(initialState) : null;
 
@@ -50,11 +50,11 @@ public class BranchBoundDFS implements Search{
         childGenerator.reset();
         ScheduleState best = seedState == null ? initialState : seedState;
         int bestCost = seedState == null || seedState == initialState ? Integer.MAX_VALUE : seedState.getTotalCost();
-        System.out.println("BEST COST: " + bestCost);
+        System.out.println("BEST COST: " + bestCost / (double) CostManager.SCALE_FACTOR);
 
         long start = System.nanoTime();
         int theoreticalBest = CostManager.getTheoreticalBest(lessonInstances);
-        System.out.println(theoreticalBest);
+        System.out.println(theoreticalBest / (double) CostManager.SCALE_FACTOR);
 
         heap.offer(initialState);
         System.out.println("SEARCH START");
@@ -81,7 +81,7 @@ public class BranchBoundDFS implements Search{
                     bestCost = state.getTotalCost();
                     best = state;
 
-                    System.out.println("new best cost:" + bestCost);
+                    System.out.println("new best cost:" + bestCost / (double) CostManager.SCALE_FACTOR);
                 }
 
                 continue;
