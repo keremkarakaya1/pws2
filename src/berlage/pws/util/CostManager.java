@@ -38,6 +38,22 @@ public final class CostManager {
         return cost;
     }
 
+    private static void updateStudentGapCounts(SubjectGroup group,
+                                               Occupancy occupancy,
+                                               int[] studentGapCounts,
+                                               int dayIndex,
+                                               int newPeriod,
+                                               boolean positive) {
+        for (int id : group.getStudents()) {
+            int gapChange = 0;
+
+            if (occupancy.getLessonCountOfStudentOnDay(id, dayIndex) != 0) {
+                gapChange = getHeuristicGapChange(id, occupancy, newPeriod, dayIndex);
+                studentGapCounts[id] += gapChange * (positive ? 1 : -1);
+            }
+        }
+    }
+
     public static int calculateAdvancedHCost(Occupancy occupancy,
                                              ScheduledLesson lesson,
                                              List<List<SubjectGroup>> subjectGroupsPerStudent,
@@ -53,7 +69,6 @@ public final class CostManager {
 
 
 
-        int[] updatedStudentGapCounts = studentGapCount.clone();
         SubjectGroup group = lesson.getGroup();
         Slot slot = lesson.getSlot();
         int oldContribution = 0;
@@ -61,16 +76,8 @@ public final class CostManager {
         int newPeriod = slot.getPeriod();
         int cost = 0;
 
-        for (int id : group.getStudents()) {
-            int gapChange = 0;
-
-            if (occupancy.getLessonCountOfStudentOnDay(id, dayIndex) != 0) {
-                gapChange = getHeuristicGapChange(id, occupancy, newPeriod, dayIndex);
-                updatedStudentGapCounts[id] += gapChange;
-            }
-        }
-
-        occupancy.updateOccupancy(lesson, true);
+       updateStudentGapCounts(group, occupancy, studentGapCount, dayIndex, newPeriod, true);
+       occupancy.updateOccupancy(lesson, true);
 
         for (int id : affectedStudents) {
             if (!group.isStudentInGroup(id)
@@ -85,7 +92,7 @@ public final class CostManager {
 
             cost += calculateStudentForcedGapCost(occupancy,
                                                     id,
-                                                    updatedStudentGapCounts[id],
+                                                    studentGapCount[id],
                                                     remainingLessonTable[id][index],
                                                     subjectGroupsPerStudent,
                                                     countGroupsToBeScheduledAtIndex,
@@ -94,6 +101,8 @@ public final class CostManager {
         }
 
         occupancy.updateOccupancy(lesson, false);
+        updateStudentGapCounts(group, occupancy, studentGapCount, dayIndex, newPeriod, false);
+
         return parentHCost + (cost - oldContribution) * weight;
     }
 
