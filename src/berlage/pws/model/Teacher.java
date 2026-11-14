@@ -4,22 +4,18 @@ import java.util.Objects;
 import java.util.Set;
 
 public class Teacher {
-    private final boolean[][] available;
-    private final boolean[] defaultAvailable;
+    private final int[] available;
     private final int id;
-    private final int countAvailableDays;
+    private final int countWorkingDays;
     private final Set<Subject> subjects;
-    //private final Set<Room> requiredRoomSet;
     private final RoomType typeRequirement;
 
-    public Teacher(int id, int countAvailableDays, boolean[] defaultAvailable, boolean[][] available, Set<Subject> subjects, RoomType typeRequirement) {
+    public Teacher(int id, int[] available, Set<Subject> subjects, RoomType typeRequirement) {
         this.id = id;
         this.available = available;
-        this.defaultAvailable = defaultAvailable;
         this.subjects = subjects;
-        //this.requiredRoomSet = roomSet;
         this.typeRequirement = typeRequirement;
-        this.countAvailableDays = countAvailableDays;
+        countWorkingDays = calculateCountWorkingDays();
     }
 
     public int getId() {
@@ -27,21 +23,36 @@ public class Teacher {
     }
 
     public boolean isAvailable(int day, int slot) {
-        return available[day][slot];
+        int bits = available[day];
+        return (bits & (1 << slot)) != 0;
     }
     
     public Set<Subject> getSubjects() {
         return subjects;
     }
 
-    /*
-    public Set<Room> getRequiredRoomSet() {
-        return requiredRoomSet;
+    public int[] getAvailable() {
+        return available;
     }
-     */
 
-    public boolean[] getDefaultAvailable() {
-        return defaultAvailable;
+    public int getAvailableBitsOnDay(int dayIndex) {
+        return available[dayIndex];
+    }
+
+    public int getCountWorkingDays() {
+        return countWorkingDays;
+    }
+
+    private int calculateCountWorkingDays() {
+        int count = 0;
+
+        for (int i = 0; i < available.length; i++) {
+            if (available[i] > 0) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
     public RoomType getTypeRequirement() {

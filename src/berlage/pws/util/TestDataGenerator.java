@@ -87,7 +87,8 @@ public class TestDataGenerator {
 
         Map<Teacher, int[]> studentsOfTeacherMap = getConvertedTeacherStudentIdMap(getTeacherStudentIdMap(subjectGroups));
         List<SubjectGroup> lessonInstances = LessonInstanceBuilder.build(countPerRoomType, subjectGroups, requiredPerWeek);
-        List<List<SubjectGroup>> subjectGroupsPerStudent = getSubjectGroupsPerStudent(students.size(), lessonInstances);
+        List<List<SubjectGroup>> subjectGroupsPerStudentList = getSubjectGroupsPerStudent(students.size(), lessonInstances);
+        SubjectGroup[][] subjectGroupsPerStudent = getArraySubjectGroupsPerStudent(subjectGroupsPerStudentList);
         int[][] countGroupsToBeScheduledAtIndex = getCountGroupsToBeScheduled(groupCount, lessonInstances);
         int[][] lessonsLeft = createLessonCountTable(lessonInstances, students);
 
@@ -242,6 +243,10 @@ public class TestDataGenerator {
             throw new IllegalArgumentException("INVALID INPUT: lessons per day must be positive");
         }
 
+        if (lessonsPerDay > 31) {
+            throw new IllegalArgumentException("INVALID INPUT: lessons per day cannot be more than 31");
+        }
+
         if (teacherCountPerSubject <= 0) {
             throw new IllegalArgumentException("INVALID INPUT: teacher count per subject must be positive");
         }
@@ -269,20 +274,6 @@ public class TestDataGenerator {
         }
     }
 
-    private boolean[][] setupAvailability(boolean[] defaultAvail) {
-        boolean[][] avail = new boolean[days][lessonsPerDay];
-
-        for (int i = 0; i < days; i++) {
-            if (defaultAvail[i]) {
-
-                for (int j = 0; j < lessonsPerDay; j++) {
-                    avail[i][j] = true;
-                }
-            }
-        }
-
-        return avail;
-    }
 
     private List<List<SubjectGroup>> getSubjectGroupsPerStudent(int studentCount, List<SubjectGroup> lessonInstances) {
         List<List<SubjectGroup>> result = new ArrayList<>();
@@ -306,6 +297,21 @@ public class TestDataGenerator {
         return Collections.unmodifiableList(result);
     }
 
+    private SubjectGroup[][] getArraySubjectGroupsPerStudent(List<List<SubjectGroup>> list) {
+        SubjectGroup[][] result = new SubjectGroup[list.size()][];
+
+        for (int i = 0; i < list.size(); i++) {
+            List<SubjectGroup> inner = list.get(i);
+            result[i] = new SubjectGroup[inner.size()];
+
+            for (int j = 0; j < inner.size(); j++) {
+                result[i][j] = inner.get(j);
+            }
+        }
+
+        return result;
+    }
+
     private Map<RoomType, Room[]> generateRooms() {
         int id = 0;
         Map<RoomType, Room[]> map = new EnumMap<>(RoomType.class);
@@ -326,11 +332,21 @@ public class TestDataGenerator {
         return map;
     }
 
-    private boolean[] generateDefaultAvailability(Set<Subject> subjects) {
-        boolean[] arr = new boolean[days];
+    private int[] generateDefaultAvailability(Set<Subject> subjects) {
+        int[] arr = new int[days];
 
         for (int i = 0; i < arr.length; i++) {
-            arr[i] = random.nextBoolean();
+            boolean val = random.nextBoolean();
+
+            if (val) {
+                int res = 0;
+
+                for (int j = 0; j < lessonsPerDay; j++) {
+                    res |= (1 << j);
+                }
+
+                arr[i] = res;
+            }
         }
 
         //Arrays.fill(arr, true);
@@ -338,8 +354,8 @@ public class TestDataGenerator {
         int count = 0;
         int missing = 0;
 
-        for (boolean b : arr) {
-            if (b) {
+        for (int num : arr) {
+            if (num > 0) {
                 count++;
             }
         }
@@ -359,7 +375,7 @@ public class TestDataGenerator {
         List<Integer> freeIndexes = new ArrayList<>();
 
         for (int i = 0; i < arr.length; i++) {
-            if (!arr[i]) {
+            if (arr[i] == 0) {
                 freeIndexes.add(i);
             }
         }
@@ -370,7 +386,13 @@ public class TestDataGenerator {
 
         while (missing > 0) {
             int selectedIndex = random.nextInt(freeIndexes.size());
-            arr[freeIndexes.get(selectedIndex)] = true;
+            int res = 0;
+
+            for (int j = 0; j < lessonsPerDay; j++) {
+                res |= (1 << j);
+            }
+
+            arr[freeIndexes.get(selectedIndex)] = res;
             freeIndexes.remove(selectedIndex);
 
             missing--;
@@ -408,14 +430,11 @@ public class TestDataGenerator {
             RoomType requiredType = roomTypeMap.get(subject);
 
             for (int i = 0; i < teacherCountPerSubject; i++) {
-                boolean[] defaultAvailability = generateDefaultAvailability(Set.of(subject));
-                boolean[][] availability = setupAvailability(defaultAvailability);
+                int[] defaultAvailability = generateDefaultAvailability(Set.of(subject));
 
                 Teacher teacher = new Teacher(
                         id++,
-                        countAvailability(defaultAvailability),
                         defaultAvailability,
-                        availability,
                         Set.of(subject),
                         requiredType);
 
@@ -426,14 +445,11 @@ public class TestDataGenerator {
         RoomType mathRoomType = roomTypeMap.get(Subject.WISKUNDE_A);
 
         for (int i = 0; i < countMathTeachers; i++) {
-            boolean[] defaultAvailability = generateDefaultAvailability(MATH_SUBJECTS);
-            boolean[][] availability = setupAvailability(defaultAvailability);
+            int[] defaultAvailability = generateDefaultAvailability(MATH_SUBJECTS);
 
             Teacher teacher = new Teacher(
                     id++,
-                    countAvailability(defaultAvailability),
                     defaultAvailability,
-                    availability,
                     MATH_SUBJECTS,
                     mathRoomType);
 
@@ -493,17 +509,5 @@ public class TestDataGenerator {
         }
 
         return result;
-    }
-
-    private int countAvailability(boolean[] arr) {
-        int count = 0;
-
-        for (int i = 0; i < arr.length; i++) {
-            if (arr[i]) {
-                count++;
-            }
-        }
-
-        return count;
     }
 }

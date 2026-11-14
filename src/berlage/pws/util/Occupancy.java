@@ -26,14 +26,22 @@ public class Occupancy {
         return Integer.bitCount(studentOccupied[id][day]);
     }
 
-    public int getStudentScheduleOnDay(int id, int day) {
+    public int getAvailablePeriods(Teacher teacher, int day) {
+        return teacher.getAvailableBitsOnDay(day) & ~teacherOccupied[teacher.getId()][day];
+    }
+
+    public int getGapBits(int id, int day) {
         int dayBits = studentOccupied[id][day];
 
         if (dayBits == 0) {
-            throw new IllegalStateException("EMPTY DAY");
+            return 0;
         }
 
-        return dayBits;
+        int first = getFirstOccupiedPeriod(id, day);
+        int last = getLastOccupiedPeriod(id, day);
+        int span = (-1 << first) & (-1 >>> (31 - last));
+
+        return span & ~dayBits;
     }
 
     public void updateOccupancy(ScheduledLesson lesson, boolean place) {
@@ -41,7 +49,6 @@ public class Occupancy {
         Teacher teacher = group.getTeacher();
         Room room = lesson.getRoom();
         Slot slot = lesson.getSlot();
-        int flatIndex = slot.getFlatIndex();
         int period = slot.getPeriod();
         int day = slot.getDay();
         int change = place ? 1 : -1;

@@ -63,13 +63,13 @@ public final class TestDataValidator {
         int days = data.days();
         int lessonsPerDay = data.lessonsPerDay();
         Set<Student> students = data.students();
-        List<List<SubjectGroup>> subjectGroupsPerStudent = data.subjectGroupsPerStudent();
+        SubjectGroup[][] subjectGroupsPerStudent = data.subjectGroupsPerStudent();
         Map<Subject, Integer> requiredPerWeek = data.requiredPerWeek();
 
         int totalAvailableSlots = days * lessonsPerDay;
 
         for (Student student : students) {
-            List<SubjectGroup> groups = subjectGroupsPerStudent.get(student.getId());
+            SubjectGroup[] groups = subjectGroupsPerStudent[student.getId()];
             int total = 0;
 
             for (SubjectGroup group : groups) {
@@ -151,7 +151,7 @@ public final class TestDataValidator {
         for (Set<Teacher> teachers : data.teacherPool().values()) {
             for (Teacher teacher : teachers) {
                 Set<Subject> subjects = teacher.getSubjects();
-                int availableDayCount = countAvailableDays(teacher);
+                int availableDayCount = teacher.getCountWorkingDays();
 
                 for (Subject subject : subjects) {
                     if (data.maxSameSubjectCountPerDay() * availableDayCount < data.requiredPerWeek().get(subject)) {
@@ -231,18 +231,5 @@ public final class TestDataValidator {
 
             studentsArray[student.getId()] = true;
         }
-    }
-
-    private static int countAvailableDays(Teacher teacher) {
-        boolean[] avail = teacher.getDefaultAvailable();
-        int res = 0;
-
-        for (boolean b : avail) {
-            if (b) {
-                res++;
-            }
-        }
-
-        return res;
     }
 }

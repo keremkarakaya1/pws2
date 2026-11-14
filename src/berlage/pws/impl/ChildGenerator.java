@@ -10,7 +10,7 @@ import java.util.*;
 public class ChildGenerator {
     private final Occupancy occupancy;
     private final List<SubjectGroup> lessonInstances;
-    private final List<List<SubjectGroup>> subjectGroupsPerStudent;
+    private final SubjectGroup[][] subjectGroupsPerStudent;
     private final Map<RoomType, Room[]> roomMap;
     private final Map<Teacher, int[]> studentsOfTeacherMap;
     private final List<ScheduleState> stateList;

@@ -94,21 +94,13 @@ public final class LessonInstanceBuilder {
         Map<Teacher, Integer> result = new HashMap<>();
 
         for (SubjectGroup group : set) {
-            result.computeIfAbsent(group.getTeacher(), teacher -> {
-                int count = 0;
+            Teacher teacher = group.getTeacher();
 
-                for (boolean able : teacher.getDefaultAvailable()) {
-                    if (able) {
-                        count++;
-                    }
-                }
+            if (teacher.getCountWorkingDays() == 0) {
+                throw new IllegalStateException("Teacher " + teacher + " has zero availability");
+            }
 
-                if (count == 0) {
-                    throw new IllegalStateException("Teacher " + teacher + " has zero availability");
-                }
-
-                return count;
-            });
+            result.computeIfAbsent(teacher, Teacher::getCountWorkingDays);
         }
 
         return result;

@@ -13,7 +13,7 @@ public record TestData(
         Map<Subject, Integer> requiredPerWeek,
         Map<Teacher, int[]> studentsOfTeacherMap,
         List<SubjectGroup> lessonInstances,
-        List<List<SubjectGroup>> subjectGroupsPerStudent,
+        SubjectGroup[][] subjectGroupsPerStudent,
         Slot[] slots,
         int[][] countGroupsToBeScheduledAtIndex,
         int[][] lessonsLeft,

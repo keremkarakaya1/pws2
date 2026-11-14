@@ -74,7 +74,7 @@ public class GroupCreator {
             List<Teacher> teachers = new ArrayList<>(teacherPool.get(subject));
 
             for (Teacher teacher : teachers) {
-                availableDays.computeIfAbsent(teacher, GroupCreator::countAvailableDays);
+                availableDays.computeIfAbsent(teacher, Teacher::getCountWorkingDays);
             }
 
             PriorityQueue<Teacher> pq = new PriorityQueue<>(
@@ -118,17 +118,4 @@ public class GroupCreator {
 
         return result;
     }
-
-    private static int countAvailableDays(Teacher teacher) {
-        int count = 0;
-
-        for (boolean b : teacher.getDefaultAvailable()) {
-            if (b) {
-                count++;
-            }
-        }
-
-        return count;
-    }
-
 }

@@ -56,7 +56,7 @@ public final class CostManager {
 
     public static int calculateAdvancedHCost(Occupancy occupancy,
                                              ScheduledLesson lesson,
-                                             List<List<SubjectGroup>> subjectGroupsPerStudent,
+                                             SubjectGroup[][] subjectGroupsPerStudent,
                                              int[][] countGroupsToBeScheduledAtIndex,
                                              int[][] remainingLessonTable,
                                              int[] studentGapCount,
@@ -108,7 +108,7 @@ public final class CostManager {
 
     public static void getOldAdvancedContribution(Occupancy occupancy,
                                                  int[] affectedStudents,
-                                                 List<List<SubjectGroup>> subjectGroupsPerStudent,
+                                                 SubjectGroup[][] subjectGroupsPerStudent,
                                                  int[][] countGroupsToBeScheduledAtIndex,
                                                  int[][] remainingLessonTable,
                                                  int[] studentGapCount,
@@ -127,48 +127,38 @@ public final class CostManager {
                                                     int id,
                                                     int gapCount,
                                                     int lessonsLeft,
-                                                    List<List<SubjectGroup>> subjectGroupsPerStudent,
+                                                    SubjectGroup[][] subjectGroupsPerStudent,
                                                     int[][] countGroupsToBeScheduledAtIndex,
                                                     int index,
                                                     int days) {
-        int gapCountBefore = gapCount;
+        SubjectGroup[] groupsOfStudent = subjectGroupsPerStudent[id];
+        int unfillable = 0;
 
         for (int i = 0; i < days; i++) {
-            if (occupancy.getLessonCountOfStudentOnDay(id,i) == 0) {
+            int gaps = occupancy.getGapBits(id, i);
+
+            if (gaps == 0) {
                 continue;
             }
 
-            int firstOccupiedPeriod = occupancy.getFirstOccupiedPeriod(id,i);
-            int lastOccupiedPeriod = occupancy.getLastOccupiedPeriod(id,i);
-            int dayBits = occupancy.getStudentScheduleOnDay(id, i);
+            int fillable = 0;
 
-            for (int j = firstOccupiedPeriod; j < lastOccupiedPeriod; j++) {
-                if ((dayBits & (1 << j)) != 0) {
+            for (SubjectGroup subjectGroup : groupsOfStudent) {
+                if (countGroupsToBeScheduledAtIndex[subjectGroup.getId()][index] <= 0) {
                     continue;
                 }
 
-                List<SubjectGroup> groupsOfStudent = subjectGroupsPerStudent.get(id);
-                boolean found = false;
+                fillable |= occupancy.getAvailablePeriods(subjectGroup.getTeacher(), i) & gaps;
 
-                for (SubjectGroup subjectGroup : groupsOfStudent) {
-                    Teacher teacher = subjectGroup.getTeacher();
-
-                    if (countGroupsToBeScheduledAtIndex[subjectGroup.getId()][index] > 0 &&
-                        !occupancy.isTeacherBusy(teacher, i, j) &&
-                        teacher.isAvailable(i,j)) {
-
-                        found = true;
-                        break;
-                    }
-                }
-
-                if (!found) {
-                    gapCountBefore--;
+                if (fillable == gaps) {
+                    break;
                 }
             }
+            
+            unfillable += Integer.bitCount(gaps & ~fillable);
         }
 
-        int forcedGapCount = Math.max(0, lessonsLeft - gapCountBefore);
+        int forcedGapCount = Math.max(0, lessonsLeft - (gapCount - unfillable));
         return forcedGapCount * GAP_WEIGHT;
     }
 

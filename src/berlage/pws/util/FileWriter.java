@@ -33,7 +33,7 @@ public class FileWriter {
             }
 
             for (Teacher teacher : all) {
-                bufferedWriter.write("Teacher: " + teacher + " availability: " + Arrays.toString(teacher.getDefaultAvailable()));
+                bufferedWriter.write("Teacher: " + teacher + " availability: " + Arrays.toString(teacher.getAvailable()));
                 bufferedWriter.newLine();
             }
 
