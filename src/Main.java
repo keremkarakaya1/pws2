@@ -123,8 +123,7 @@ public class Main {
             Subject.WISKUNDE_A, Subject.WISKUNDE_B, Subject.WISKUNDE_C,
             Subject.NATUURKUNDE, Subject.SCHEIKUNDE, Subject.BIOLOGIE,
             Subject.GESCHIEDENIS, Subject.AARDRIJKSKUNDE,
-            Subject.ECONOMIE, Subject.BEDRIJFSECONOMIE,
-            Subject.MAATSCHAPPIJLEER, Subject.FILOSOFIE, Subject.KUNST
+            Subject.ECONOMIE, Subject.MAATSCHAPPIJLEER, Subject.FILOSOFIE, Subject.KUNST
         );
 
         Set<Subject> commonMandatory = EnumSet.of(
@@ -178,7 +177,6 @@ public class Main {
                 Map.entry(Subject.GESCHIEDENIS, 2),
                 Map.entry(Subject.AARDRIJKSKUNDE, 2),
                 Map.entry(Subject.ECONOMIE, 3),
-                Map.entry(Subject.BEDRIJFSECONOMIE, 3),
                 Map.entry(Subject.MAATSCHAPPIJLEER, 2),
                 Map.entry(Subject.CKV, 1),
                 Map.entry(Subject.FILOSOFIE, 2),
@@ -200,7 +198,6 @@ public class Main {
                 Map.entry(Subject.GESCHIEDENIS, 2),
                 Map.entry(Subject.AARDRIJKSKUNDE, 2),
                 Map.entry(Subject.ECONOMIE, 2),
-                Map.entry(Subject.BEDRIJFSECONOMIE, 1),
                 Map.entry(Subject.MAATSCHAPPIJLEER, 1),
                 Map.entry(Subject.CKV, 1),
                 Map.entry(Subject.FILOSOFIE, 1),
