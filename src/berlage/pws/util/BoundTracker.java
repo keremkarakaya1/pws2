@@ -1,56 +1,39 @@
 package berlage.pws.util;
 
 import berlage.pws.model.ScheduleState;
-import berlage.pws.model.SubjectGroup;
 
 import java.util.Arrays;
-import java.util.List;
 
+/** Tracks the unweighted f (in whole gaps) of all open states; the minimum is a lower bound on the optimum. */
 public class BoundTracker {
-    private int[] counts;
+    private int[] counts = new int[1024];
     private final int weight;
-    private final int offset;
 
-    public BoundTracker(List<SubjectGroup> lessonInstances, int weight) {
-        counts = new int[1024];
-        offset = CostManager.getTheoreticalBest(lessonInstances);
+    public BoundTracker(int weight) {
         this.weight = weight;
     }
 
     public void track(ScheduleState state, boolean add) {
-        int cost = state.getGCost() + state.getHCost() / weight * CostManager.SCALE_FACTOR;
-        int index = (cost - offset) / (CostManager.GAP_WEIGHT * CostManager.SCALE_FACTOR);
+        int index = state.getGCost() / CostManager.SCALE_FACTOR + state.getHCost() / weight;
 
-        if (index < 0) {
-            System.out.println("NEGATIVE INDEX");
-            index = 0;
+        if (index >= counts.length) {
+            counts = Arrays.copyOf(counts, Math.max(index + 1, counts.length * 2));
         }
 
-        while (index >= counts.length) {
-            resize();
-        }
-
-        if (add) {
-            counts[index]++;
-        } else {
-            counts[index]--;
-        }
+        counts[index] += add ? 1 : -1;
     }
 
     public int getBound() {
         for (int i = 0; i < counts.length; i++) {
             if (counts[i] > 0) {
-                return i * CostManager.GAP_WEIGHT * CostManager.SCALE_FACTOR + offset;            }
+                return i * CostManager.SCALE_FACTOR;
+            }
         }
 
         return Integer.MAX_VALUE;
     }
 
-    private void resize() {
-        counts = Arrays.copyOf(counts, counts.length * 2);
-    }
-
     public void reset() {
-        Arrays.fill(counts,0);
+        Arrays.fill(counts, 0);
     }
 }

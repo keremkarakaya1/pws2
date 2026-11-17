@@ -2,6 +2,7 @@ package berlage.pws.impl;
 
 import berlage.pws.model.*;
 import berlage.pws.util.CostManager;
+import berlage.pws.util.GapCost;
 import berlage.pws.util.Occupancy;
 import berlage.pws.util.TestData;
 
@@ -9,34 +10,22 @@ import java.util.*;
 
 public class ChildGenerator {
     private final Occupancy occupancy;
+    private final GapCost gapCost;
     private final List<SubjectGroup> lessonInstances;
-    private final SubjectGroup[][] subjectGroupsPerStudent;
     private final Map<RoomType, Room[]> roomMap;
-    private final Map<Teacher, int[]> studentsOfTeacherMap;
-    private final List<ScheduleState> stateList;
-    private final int[][][] placementIds;
-    private final int[][] lessonsLeft;
-    private final int[][] countGroupsToBeScheduled;
-    private final int[] perStudentGapCount;
-    private final int[] students;
-    private final int[] contributionPerStudent;
+    private final Map<Teacher, int[]> studentsOfTeacher = new HashMap<>();
+    private final List<ScheduleState> stateList = new ArrayList<>();
+    private final ScheduledLesson[][][] placements;
     private final Slot[] slots;
-    private ScheduledLesson[] placements;
-    private final int days;
     private final boolean heuristic;
-    private final boolean advanced;
     private final int weight;
-    int cannotPlaceCount = 0;
 
-    public ChildGenerator(TestData data, boolean heuristic, boolean advanced, int weight) {
-        days = data.days();
-        roomMap = data.roomMap();
-        this.lessonInstances = data.lessonInstances();
+    public ChildGenerator(TestData data, boolean heuristic, int weight) {
         this.heuristic = heuristic;
-        this.advanced = advanced;
         this.weight = weight;
-        this.slots = data.slots();
-        lessonsLeft = data.lessonsLeft();
+        slots = data.slots();
+        roomMap = data.roomMap();
+        lessonInstances = data.lessonInstances();
 
         occupancy = new Occupancy(
                 data.teacherCount(),
@@ -47,170 +36,76 @@ public class ChildGenerator {
                 data.maxSameSubjectCountPerDay(),
                 data.groupCount());
 
+        gapCost = new GapCost(occupancy,
+                data.subjectGroupsPerStudent(),
+                data.countGroupsToBeScheduledAtIndex(),
+                data.days(),
+                data.students().size());
 
-        subjectGroupsPerStudent = data.subjectGroupsPerStudent();
-        countGroupsToBeScheduled = data.countGroupsToBeScheduledAtIndex();
-        studentsOfTeacherMap = data.studentsOfTeacherMap();
-        students = new int[data.students().size()];
-        perStudentGapCount = new int[students.length];
-        contributionPerStudent = new int[students.length];
-        stateList = new ArrayList<>();
+        // A student must appear once per teacher, or the cost deltas would double count.
+        data.studentsOfTeacherMap().forEach((teacher, ids) ->
+                studentsOfTeacher.put(teacher, Arrays.stream(ids).distinct().toArray()));
 
-        int placementId = 0;
-        int upperBoundTotalPlacements = data.groupCount() * data.slots().length * data.roomCount();
-        placements = new ScheduledLesson[upperBoundTotalPlacements];
-        placementIds = new int[data.groupCount()][data.slots().length][data.roomCount()];
+        placements = new ScheduledLesson[data.groupCount()][slots.length][data.roomCount()];
 
-        for (Slot slot : slots) {
-            for (Set<SubjectGroup> groups : data.subjectGroups().values()) {
-                for (SubjectGroup group : groups) {
-                    for (Room room : roomMap.get(group.getTeacher().getTypeRequirement())) {
-                        placements[placementId] = new ScheduledLesson(group, slot, room);
-                        placementIds[group.getId()][slot.getFlatIndex()][room.getId()] = placementId;
-                        placementId++;
+        for (Set<SubjectGroup> groups : data.subjectGroups().values()) {
+            for (SubjectGroup group : groups) {
+                for (Room room : roomMap.get(group.getTeacher().getTypeRequirement())) {
+                    for (Slot slot : slots) {
+                        placements[group.getId()][slot.getFlatIndex()][room.getId()] =
+                                new ScheduledLesson(group, slot, room);
                     }
                 }
             }
         }
-
-        placements = Arrays.copyOf(placements, placementId);
-
-        int index = 0;
-        for (Student student : data.students()) {
-            students[index++] = student.getId();
-        }
     }
 
     public List<ScheduleState> generateChildren(ScheduleState state) {
-        if (state.getIndex() == lessonInstances.size()) {
+        int index = state.getIndex();
+
+        if (index == lessonInstances.size()) {
             throw new IllegalStateException("COMPLETE SCHEDULE CHILDREN REQUEST");
         }
 
         stateList.clear();
         occupancy.buildFullState(state);
+        gapCost.startParent(index);
 
-        int index = state.getIndex();
         SubjectGroup group = lessonInstances.get(index);
-        int[] teacherStudents = studentsOfTeacherMap.get(group.getTeacher());
-        SubjectGroup previous = index == 0 ? null : lessonInstances.get(index - 1);
-        RoomType requiredType = group.getTeacher().getTypeRequirement();
+        Teacher teacher = group.getTeacher();
+        int[] teacherStudents = studentsOfTeacher.get(teacher);
+        ScheduledLesson[][] options = placements[group.getId()];
 
-        int allowedFromIndex = -1;
-        int parentHCost = 0;
-        int oldGroupContribution = 0;
+        // Identical consecutive lessons are placed in increasing slot order (symmetry breaking).
+        int first = 0;
 
-        if (heuristic) {
-            boolean isRoot = state.getPlacedLesson() == null;
-
-            if (isRoot) {
-                fillPerStudentGapCount(students);
-            } else if (advanced) {
-                fillPerStudentGapCount(teacherStudents);
-            } else {
-                fillPerStudentGapCount(group.getStudents());
-            }
-
-            parentHCost = isRoot
-                    ? CostManager.calculateFullHCost(students, lessonsLeft, perStudentGapCount, index) * weight
-                    : state.getHCost();
-
-            if (advanced) {
-                CostManager.getOldAdvancedContribution(occupancy, teacherStudents,
-                        subjectGroupsPerStudent, countGroupsToBeScheduled, lessonsLeft,
-                        perStudentGapCount, contributionPerStudent, index, days);
-            } else {
-                oldGroupContribution = CostManager.getOldContribution(group, lessonsLeft, perStudentGapCount, index);
-            }
-
+        if (index > 0 && lessonInstances.get(index - 1) == group) {
+            first = state.getPlacedLesson().getSlot().getFlatIndex() + 1;
         }
 
-        if (previous == lessonInstances.get(index)) {
-            ScheduledLesson lesson = state.getPlacedLesson();
-            Slot slot = lesson.getSlot();
-            allowedFromIndex = slot.getFlatIndex();
-        }
-
-        for (Slot slot : slots) {
-            if (slot.getFlatIndex() <= allowedFromIndex) {
-                continue;
-            }
+        for (int s = first; s < slots.length; s++) {
+            Slot slot = slots[s];
 
             if (!occupancy.canPlace(group, slot)) {
-                cannotPlaceCount++;
                 continue;
             }
 
-            Room room = getFreeRoom(requiredType, slot);
+            Room room = getFreeRoom(teacher.getTypeRequirement(), slot);
 
             if (room == null) {
                 continue;
             }
 
-            int placementId = placementIds[group.getId()][slot.getFlatIndex()][room.getId()];
-            ScheduledLesson scheduledLesson = placements[placementId];
+            ScheduledLesson lesson = options[s][room.getId()];
+            gapCost.evaluate(lesson, teacherStudents);
 
-            int hCost = 0;
-            int gCost = state.getGCost() + CostManager.calculateGCost(occupancy, scheduledLesson);
+            int gCost = state.getGCost() + gapCost.deadDelta() * CostManager.SCALE_FACTOR;
+            int hCost = heuristic ? state.getHCost() + gapCost.boundDelta() * weight : 0;
 
-            if (heuristic) {
-                if (advanced) {
-                    hCost = CostManager.calculateAdvancedHCost(occupancy,
-                            scheduledLesson,
-                            subjectGroupsPerStudent,
-                            countGroupsToBeScheduled,
-                            lessonsLeft,
-                            perStudentGapCount,
-                            teacherStudents,
-                            contributionPerStudent,
-                            index + 1,
-                            days,
-                            weight,
-                            parentHCost);
-                } else {
-                    hCost = CostManager.calculateHCost(occupancy,
-                            scheduledLesson,
-                            lessonsLeft,
-                            perStudentGapCount,
-                            index,
-                            parentHCost,
-                            oldGroupContribution,
-                            weight);
-                }
-            }
-
-
-            ScheduleState childState = new ScheduleState(
-                    state,
-                    scheduledLesson,
-                    hCost,
-                    gCost,
-                    index + 1);
-
-            stateList.add(childState);
+            stateList.add(new ScheduleState(state, lesson, hCost, gCost, index + 1));
         }
 
         return stateList;
-    }
-
-    private void fillPerStudentGapCount(int[] students) {
-        for (int id : students) {
-            int gapCount = 0;
-
-            for (int i = 0; i < days; i++) {
-                int lessonCount = occupancy.getLessonCountOfStudentOnDay(id, i);
-
-                if (lessonCount == 0) {
-                    continue;
-                }
-
-                int firstPeriod = occupancy.getFirstOccupiedPeriod(id, i);
-                int lastPeriod = occupancy.getLastOccupiedPeriod(id, i);
-
-                gapCount += lastPeriod - firstPeriod + 1 - lessonCount;
-            }
-
-            perStudentGapCount[id] = gapCount;
-        }
     }
 
     public void reset() {
@@ -222,11 +117,9 @@ public class ChildGenerator {
     }
 
     private Room getFreeRoom(RoomType type, Slot slot) {
-        Room[] rooms = roomMap.get(type);
-
-        for (int i = 0; i < rooms.length; i++) {
-            if (!occupancy.isRoomBusy(rooms[i], slot)) {
-                return rooms[i];
+        for (Room room : roomMap.get(type)) {
+            if (!occupancy.isRoomBusy(room, slot)) {
+                return room;
             }
         }
 
