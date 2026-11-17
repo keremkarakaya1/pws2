@@ -19,7 +19,7 @@ public class Main {
 
         for (int w = 0; w < warmUps; w++) {
             for (boolean[] s : settings) {
-                //new PathFinder(data, s[0], false, s[1], 1).find();
+                new PathFinder(data, s[0], false, s[1], 1).find();
             }
         }
 
@@ -307,7 +307,7 @@ public class Main {
 
 
         //PathFinder aStarWeighted = new PathFinder(testDataTiny, true, false, false, 2);
-        PathFinder aStar = new PathFinder(testDataTiny, true, false);
+        PathFinder aStar = new PathFinder(testDataTiny, true, false, false);
         OutputManager outputManagerAStar = new OutputManager(lessonsPerDayTiny, daysTiny, "outputAstar.html");
         runAstarBasic(aStar, outputManagerAStar, results);
 

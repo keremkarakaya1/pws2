@@ -1,46 +1,67 @@
 package berlage.pws.impl;
 
 import berlage.pws.model.ScheduleState;
+import berlage.pws.model.SubjectGroup;
 import berlage.pws.util.CostManager;
 import berlage.pws.util.Heap;
 import berlage.pws.util.TestData;
 
-import java.util.List;
+import java.util.*;
 
-public class BranchBoundDFS implements Search {
-    private final Heap heap = new Heap(true);
+public class BranchBoundDFS implements Search{
+    private final Heap heap;
     private final ChildGenerator childGenerator;
-    private final ScheduleState initialState = new ScheduleState(null, null, 0, 0, 0);
+    private final ScheduleState initialState;
+    private final List<SubjectGroup> lessonInstances;
     private final ScheduleState seedState;
-    private final int lessonCount;
-    private final long timeLimitNanos;
+    private final int timeLimitInSeconds;
 
-    public BranchBoundDFS(TestData data, int timeLimitInSeconds, boolean heuristic) {
-        this(data, timeLimitInSeconds, heuristic, null);
+    public BranchBoundDFS(TestData data,
+                          int timeLimitInSeconds,
+                          boolean heuristic,
+                          boolean advanced) {
+        this(data, timeLimitInSeconds, heuristic, false, advanced, null);
     }
 
-    /** A non-null seed search gives a starting upper bound. */
-    public BranchBoundDFS(TestData data, int timeLimitInSeconds, boolean heuristic, Search seedSearch) {
-        childGenerator = new ChildGenerator(data, heuristic, CostManager.SCALE_FACTOR);
-        seedState = seedSearch == null ? null : seedSearch.findOrDefault(null);
-        lessonCount = childGenerator.getLessonInstances().size();
-        timeLimitNanos = timeLimitInSeconds * 1_000_000_000L;
+
+    public BranchBoundDFS(TestData data,
+                          int timeLimitInSeconds,
+                          boolean heuristic,
+                          boolean seeded,
+                          boolean advanced,
+                          Search algorithm) {
+
+        if (seeded && algorithm == null) {
+            throw new RuntimeException("SEARCH ALG NULL -> BB");
+        }
+
+        heap = new Heap(true);
+        childGenerator = new ChildGenerator(data, heuristic, advanced, 100);
+        initialState = new ScheduleState(null, null, 0,0,0);
+        seedState = seeded ? algorithm.findOrDefault(initialState) : null;
+
+        this.lessonInstances = childGenerator.getLessonInstances();
+        this.timeLimitInSeconds = timeLimitInSeconds;
     }
 
     @Override
     public ScheduleState find() {
         heap.clear();
         childGenerator.reset();
+        ScheduleState best = seedState == null ? initialState : seedState;
+        int bestCost = seedState == null || seedState == initialState ? Integer.MAX_VALUE : seedState.getTotalCost();
+        System.out.println("BEST COST: " + bestCost / (double) CostManager.SCALE_FACTOR);
 
-        ScheduleState best = seedState;
-        int bestCost = best == null ? Integer.MAX_VALUE : best.getTotalCost();
         long start = System.nanoTime();
+        int theoreticalBest = CostManager.getTheoreticalBest(lessonInstances);
+        System.out.println(theoreticalBest / (double) CostManager.SCALE_FACTOR);
 
         heap.offer(initialState);
+        System.out.println("SEARCH START");
 
         while (!heap.isEmpty()) {
-            if (System.nanoTime() - start >= timeLimitNanos) {
-                if (best == null) {
+            if ((System.nanoTime() - start) / 1000000000 >= timeLimitInSeconds) {
+                if (bestCost == Integer.MAX_VALUE) {
                     throw new RuntimeException("NO SCHEDULE FOUND WITHIN TIME LIMIT");
                 }
 
@@ -48,23 +69,24 @@ public class BranchBoundDFS implements Search {
                 return best;
             }
 
-            // Zero gaps cannot be beaten.
-            if (bestCost == 0) {
+            if (bestCost == theoreticalBest) {
                 System.out.println("Best schedule found");
                 return best;
             }
 
             ScheduleState state = heap.poll();
 
-            if (state.getIndex() == lessonCount) {
+            if (state.getIndex() == lessonInstances.size()) {
                 if (state.getTotalCost() < bestCost) {
-                    best = state;
                     bestCost = state.getTotalCost();
-                    System.out.println("new best gaps: " + bestCost / (double) CostManager.SCALE_FACTOR);
+                    best = state;
+
+                    System.out.println("new best cost:" + bestCost / (double) CostManager.SCALE_FACTOR);
                 }
 
                 continue;
             }
+
 
             if (state.getTotalCost() >= bestCost) {
                 continue;
@@ -79,8 +101,9 @@ public class BranchBoundDFS implements Search {
             }
         }
 
-        if (best == null) {
-            throw new RuntimeException("NO SCHEDULE FOUND");
+        if (bestCost == Integer.MAX_VALUE) {
+            System.out.println("NO SCHEDULE FOUND");
+            throw new RuntimeException();
         }
 
         return best;
