@@ -27,8 +27,12 @@ public class OutputManager {
 
     public static double getAverageGap(ScheduledLesson[][][] lessons) {
        int gapCount = 0;
+       int max = Integer.MIN_VALUE;
+       int min = Integer.MAX_VALUE;
 
         for (int i = 0; i < lessons.length; i++) {
+            int studentCounter = 0;
+
            for (int j = 0; j < lessons[i].length; j++) {
 
                int start = 0;
@@ -46,11 +50,17 @@ public class OutputManager {
                for (int z = start; z <= end; z++) {
                    if (lessons[i][j][z] == null) {
                        gapCount++;
+                       studentCounter++;
                    }
                }
            }
+
+           max = Math.max(max, studentCounter);
+           min = Math.min(min, studentCounter);
        }
 
+        System.out.println("MAX: " + max);
+        System.out.println("MIN: " + min);
         return (double) gapCount / lessons.length;
     }
 
