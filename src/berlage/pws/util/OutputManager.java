@@ -26,9 +26,8 @@ public class OutputManager {
     }
 
     public static double getAverageGap(ScheduledLesson[][][] lessons) {
-       int gapCount = 0;
-       int max = Integer.MIN_VALUE;
-       int min = Integer.MAX_VALUE;
+       Map<Integer, Integer> map = new HashMap<>();
+        int gapCount = 0;
 
         for (int i = 0; i < lessons.length; i++) {
             int studentCounter = 0;
@@ -55,12 +54,10 @@ public class OutputManager {
                }
            }
 
-           max = Math.max(max, studentCounter);
-           min = Math.min(min, studentCounter);
+           map.put(studentCounter, map.getOrDefault(studentCounter,0) + 1);
        }
 
-        System.out.println("MAX: " + max);
-        System.out.println("MIN: " + min);
+        System.out.println(map);
         return (double) gapCount / lessons.length;
     }
 
